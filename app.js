@@ -100,9 +100,9 @@ const sampleArticle = `人的記憶不是像硬碟一樣把資訊完整存進去
 const translations = {
   zh: {
     memoryMode: "記憶訓練",
-    chromeMode: "Chrome 分析",
+    chromeMode: "瀏覽時間",
     loadSample: "載入範例",
-    importChromeJson: "匯入 Chrome JSON",
+    importChromeJson: "匯入瀏覽資料",
     sourceTitle: "放入一段文字",
     pasteClipboard: "載入剪貼簿",
     sampleArticle: "範例文章",
@@ -115,6 +115,7 @@ const translations = {
     practiceTitle: "關閉原文後複述",
     ready: "準備",
     reading: "閱讀",
+    timeLeft: "剩餘時間",
     recall: "回想",
     calibrate: "校準",
     writeItDown: "寫下來",
@@ -162,7 +163,7 @@ const translations = {
     training: "訓練",
     sendToTraining: "送到訓練",
     localExport: "Local Export",
-    howToExport: "如何產生 Chrome JSON",
+    howToExport: "如何產生瀏覽資料",
     exportStepCloseChrome: "關閉 Chrome 後，在這個專案資料夾執行",
     exportStepBasic: "它會複製本機 Chrome History 資料庫，只輸出網址、標題、時間、估計停留秒數和分類。",
     exportStepContent: "若要把可讀取的網頁正文也一起帶進來，可執行",
@@ -172,7 +173,7 @@ const translations = {
     outputFile: "輸出檔",
     noData: "尚無資料",
     noCategoryData: "匯入資料後顯示",
-    importedJsonEmpty: "尚未匯入 Chrome JSON",
+    importedJsonEmpty: "尚未匯入瀏覽資料",
     jsonIdle: "匯入後可在這裡更新資料。",
     noMemoryHistory: "還沒有紀錄。完成一次校準後，這裡會留下你的分數與漏掉的重點。",
     noMissingPoints: "沒有補充漏掉的重點。",
@@ -206,9 +207,9 @@ const translations = {
   },
   en: {
     memoryMode: "Memory Training",
-    chromeMode: "Chrome Analysis",
+    chromeMode: "Browsing Time",
     loadSample: "Load Sample",
-    importChromeJson: "Import Chrome JSON",
+    importChromeJson: "Import Browsing Data",
     sourceTitle: "Add A Passage",
     pasteClipboard: "Load Clipboard",
     sampleArticle: "Sample Passage",
@@ -221,6 +222,7 @@ const translations = {
     practiceTitle: "Recall Without The Source",
     ready: "Ready",
     reading: "Reading",
+    timeLeft: "Time left",
     recall: "Recall",
     calibrate: "Calibrate",
     writeItDown: "Write",
@@ -268,7 +270,7 @@ const translations = {
     training: "Train",
     sendToTraining: "Train",
     localExport: "Local Export",
-    howToExport: "How To Generate Chrome JSON",
+    howToExport: "How To Generate Browsing Data",
     exportStepCloseChrome: "After closing Chrome, run this in the project folder",
     exportStepBasic: "It copies the local Chrome History database and exports URL, title, time, estimated dwell seconds, and category.",
     exportStepContent: "To include readable page text, run",
@@ -278,7 +280,7 @@ const translations = {
     outputFile: "Output file",
     noData: "No data",
     noCategoryData: "Import data to display",
-    importedJsonEmpty: "No Chrome JSON imported",
+    importedJsonEmpty: "No browsing data imported",
     jsonIdle: "After import, you can update the data here.",
     noMemoryHistory: "No history yet. After a review, your score and missed points appear here.",
     noMissingPoints: "No missed points added.",
@@ -312,6 +314,18 @@ const translations = {
   },
 };
 
+const categoryLabels = {
+  "AI/技術": { zh: "AI/技術", en: "AI / Tech" },
+  "學習/文件": { zh: "學習/文件", en: "Learning / Docs" },
+  "影片/娛樂": { zh: "影片/娛樂", en: "Video / Entertainment" },
+  "社群": { zh: "社群", en: "Social" },
+  "新聞/資訊": { zh: "新聞/資訊", en: "News / Info" },
+  "購物": { zh: "購物", en: "Shopping" },
+  "工作/工具": { zh: "工作/工具", en: "Work / Tools" },
+  "金融": { zh: "金融", en: "Finance" },
+  "旅遊/地圖": { zh: "旅遊/地圖", en: "Travel / Maps" },
+  "其他": { zh: "其他", en: "Other" },
+};
 function t(key, params = {}) {
   const template = translations[currentLanguage][key] || translations.zh[key] || key;
   return Object.entries(params).reduce(
@@ -320,6 +334,10 @@ function t(key, params = {}) {
   );
 }
 
+
+function categoryName(category) {
+  return categoryLabels[category]?.[currentLanguage] || category;
+}
 function localeName() {
   return currentLanguage === "zh" ? "zh-Hant" : "en-US";
 }
@@ -700,7 +718,7 @@ function drilldownLabel() {
     return t("drilldownDefault");
   }
   if (activeDrilldown.type === "category") {
-    return t("detailCategory", { value: activeDrilldown.value });
+    return t("detailCategory", { value: categoryName(activeDrilldown.value) });
   }
   return t("detailHour", { value: activeDrilldown.value });
 }
@@ -770,7 +788,7 @@ function renderCategoryChart(items) {
   const rows = aggregate(items, (visit) => visit.category).slice(0, 10);
   drawBarChart(
     categoryCanvas,
-    rows.map((row) => ({ label: row.name, key: row.name, value: row.seconds || row.visits, ...row })),
+    rows.map((row) => ({ label: categoryName(row.name), key: row.name, value: row.seconds || row.visits, ...row })),
     {
       activeKey: activeDrilldown?.type === "category" ? activeDrilldown.value : undefined,
       onBarClick: (row) => {
@@ -787,13 +805,13 @@ function renderCategoryChart(items) {
     const detail = document.createElement("small");
     item.className = "legend-item";
     swatch.style.background = colors[index % colors.length];
-    name.textContent = row.name;
+    name.textContent = categoryName(row.name);
     detail.textContent = `${row.visits} ${t("visitsUnit")} · ${secondsLabel(row.seconds)}`;
     item.append(swatch, name, detail);
     categoryLegend.append(item);
   });
   categoryCaption.textContent = rows.length ? t("categoryCount", { count: rows.length }) : t("noCategoryData");
-  topCategory.textContent = rows[0]?.name || t("noData");
+  topCategory.textContent = rows[0] ? categoryName(rows[0].name) : t("noData");
 }
 
 function renderHourChart(items) {
@@ -860,7 +878,7 @@ function renderTable(items) {
       minute: "2-digit",
     });
 
-    [time, visit.category, visit.domain].forEach((value) => {
+    [time, categoryName(visit.category), visit.domain].forEach((value) => {
       const cell = document.createElement("td");
       cell.textContent = value;
       row.append(cell);
@@ -1105,4 +1123,9 @@ setDefaultDates();
 loadVisits([]);
 setAppMode("memory");
 applyLanguage();
+
+
+
+
+
 

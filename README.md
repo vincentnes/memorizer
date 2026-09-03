@@ -12,7 +12,7 @@ It helps with a common problem: you read something and understand it, but cannot
 - Chart drilldown: click a bar in the category or hourly chart to show matching visit logs.
 - Visit-to-training: send a visit's fetched page content, title, and link into memory training.
 - Bilingual UI: switch between Traditional Chinese and English.
-- Local update API: when served from `tools/local_server.py`, the app can regenerate Chrome JSON from your machine.
+- Local update API: when served from `tools/local_server.py`, the app can regenerate browsing data JSON from your machine.
 
 ## Quick Start
 
@@ -30,7 +30,7 @@ http://127.0.0.1:8765/
 
 You can also open `index.html` directly, but direct file mode cannot run local Python or use the JSON update API.
 
-## Export Chrome History
+## Export Browsing Data
 
 Close Chrome first if the history database is locked, then run:
 
@@ -50,7 +50,7 @@ For sites where the main article is in a right-side content column:
 python tools/export_chrome_history.py --days 7 --fetch-content --content-region right
 ```
 
-Then import `chrome_history_export.json` in the Chrome Analysis view.
+Then import `chrome_history_export.json` in the Browsing Time view.
 
 ## Privacy And Security
 
@@ -111,3 +111,4 @@ git remote add origin https://github.com/YOUR_NAME/memorizer.git
 git branch -M main
 git push -u origin main
 ```
+

@@ -16,14 +16,14 @@
         <div class="top-actions">
           <div class="mode-switch" aria-label="功能切換">
             <button id="memoryModeButton" class="mode-button active" type="button" data-i18n="memoryMode">記憶訓練</button>
-            <button id="chromeModeButton" class="mode-button" type="button" data-i18n="chromeMode">Chrome 分析</button>
+            <button id="chromeModeButton" class="mode-button" type="button" data-i18n="chromeMode">瀏覽時間</button>
           </div>
-          <button id="languageToggleButton" class="secondary-button" type="button">English</button>
           <button id="loadSampleButton" class="secondary-button" type="button" data-i18n="loadSample">載入範例</button>
           <label class="file-button">
-            <span data-i18n="importChromeJson">匯入 Chrome JSON</span>
+            <span data-i18n="importChromeJson">匯入瀏覽資料</span>
             <input id="historyFile" type="file" accept=".json,application/json" />
           </label>
+          <button id="languageToggleButton" class="secondary-button language-button" type="button">English</button>
         </div>
       </header>
 
@@ -68,9 +68,12 @@
                 <p class="eyebrow">Recall Practice</p>
                 <h2 id="practiceTitle" data-i18n="practiceTitle">關閉原文後複述</h2>
               </div>
-              <div class="session-status" aria-live="polite">
+              <div class="session-status" id="sessionStatus" aria-live="polite">
                 <span id="phaseLabel">準備</span>
                 <strong id="timerLabel">00:00</strong>
+                <div class="timer-track" aria-hidden="true">
+                  <span id="timerProgress"></span>
+                </div>
               </div>
             </div>
 
@@ -162,7 +165,7 @@
       <section id="jsonStatusPanel" class="json-status-panel hidden" aria-live="polite">
         <div>
           <p class="eyebrow">Imported JSON</p>
-          <h2 id="jsonGeneratedAt">尚未匯入 Chrome JSON</h2>
+          <h2 id="jsonGeneratedAt">尚未匯入瀏覽資料</h2>
           <p id="jsonUpdateStatus">匯入後可在這裡更新資料。</p>
         </div>
         <div class="json-actions">
@@ -256,7 +259,7 @@
       <section class="export-panel">
         <div>
           <p class="eyebrow" data-i18n="localExport">Local Export</p>
-          <h2 data-i18n="howToExport">如何產生 Chrome JSON</h2>
+          <h2 data-i18n="howToExport">如何產生瀏覽資料</h2>
           <p>
             <span data-i18n="exportStepCloseChrome">關閉 Chrome 後，在這個專案資料夾執行</span>
             <code>python tools/export_chrome_history.py --days 7</code>。
@@ -278,4 +281,9 @@
     <script src="app.js"></script>
   </body>
 </html>
+
+
+
+
+
 

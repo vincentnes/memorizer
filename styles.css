@@ -57,6 +57,7 @@ button,
 .top-actions {
   gap: 10px;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .inline-actions {
@@ -135,27 +136,38 @@ code {
 
 .mode-switch {
   display: inline-flex;
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
+  gap: 6px;
+  min-height: 48px;
+  padding: 5px;
+  border: 1px solid #1f3340;
+  border-radius: 10px;
+  background: #182027;
+  box-shadow: 0 10px 24px rgba(24, 32, 39, 0.18);
 }
 
 .mode-button {
-  min-height: 34px;
+  min-height: 36px;
   border: 1px solid transparent;
-  border-radius: 7px;
-  padding: 0 12px;
+  border-radius: 8px;
+  padding: 0 14px;
   background: transparent;
-  color: var(--muted);
+  color: #dbe8ee;
   font-weight: 800;
 }
 
 .mode-button.active {
-  background: white;
-  color: var(--ink);
-  box-shadow: 0 4px 14px rgba(21, 40, 52, 0.08);
+  background: #ffffff;
+  color: #182027;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+}
+
+.mode-button:not(.active):hover {
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.language-button {
+  margin-left: 12px;
 }
 
 .file-button input {
@@ -330,10 +342,10 @@ button:disabled {
 }
 
 .session-status {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  min-width: 180px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 16px;
+  min-width: 230px;
   padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -341,7 +353,48 @@ button:disabled {
 }
 
 .session-status span {
+  align-self: center;
   color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.session-status strong {
+  font-size: 1.8rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-track {
+  grid-column: 1 / -1;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #dce5ea;
+}
+
+.timer-track span {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 220ms linear, background 160ms ease;
+}
+
+.session-status.timer-running {
+  border-color: rgba(37, 109, 133, 0.38);
+  background: #eef8fa;
+}
+
+.session-status.timer-urgent {
+  border-color: rgba(212, 98, 68, 0.58);
+  background: #fff1ec;
+}
+
+.session-status.timer-urgent .timer-track span {
+  background: #d46244;
 }
 
 .article-card {
@@ -658,9 +711,20 @@ a:hover {
     flex-direction: column;
   }
 
+  .top-actions {
+    justify-content: flex-start;
+  }
+
+  .language-button {
+    margin-left: 0;
+  }
+
   .controls-grid,
   .summary-grid,
   .memory-settings {
     grid-template-columns: 1fr;
   }
 }
+
+
+
