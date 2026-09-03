@@ -161,7 +161,15 @@ const translations = {
     link: "連結",
     training: "訓練",
     sendToTraining: "送到訓練",
+    localExport: "Local Export",
     howToExport: "如何產生 Chrome JSON",
+    exportStepCloseChrome: "關閉 Chrome 後，在這個專案資料夾執行",
+    exportStepBasic: "它會複製本機 Chrome History 資料庫，只輸出網址、標題、時間、估計停留秒數和分類。",
+    exportStepContent: "若要把可讀取的網頁正文也一起帶進來，可執行",
+    exportStepRight: "如果正文在右邊主欄，使用",
+    exportStepServer: "若要讓「更新 JSON」按鈕自動執行 Python，請用",
+    exportStepServerEnd: "啟動本機 app。",
+    outputFile: "輸出檔",
     noData: "尚無資料",
     noCategoryData: "匯入資料後顯示",
     importedJsonEmpty: "尚未匯入 Chrome JSON",
@@ -259,7 +267,15 @@ const translations = {
     link: "Link",
     training: "Train",
     sendToTraining: "Train",
+    localExport: "Local Export",
     howToExport: "How To Generate Chrome JSON",
+    exportStepCloseChrome: "After closing Chrome, run this in the project folder",
+    exportStepBasic: "It copies the local Chrome History database and exports URL, title, time, estimated dwell seconds, and category.",
+    exportStepContent: "To include readable page text, run",
+    exportStepRight: "If the article body is in the right content column, use",
+    exportStepServer: "To let the Update JSON button run Python automatically, start the local app with",
+    exportStepServerEnd: "",
+    outputFile: "Output file",
     noData: "No data",
     noCategoryData: "Import data to display",
     importedJsonEmpty: "No Chrome JSON imported",
@@ -1089,3 +1105,4 @@ setDefaultDates();
 loadVisits([]);
 setAppMode("memory");
 applyLanguage();
+
