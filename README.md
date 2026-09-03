@@ -76,6 +76,7 @@ The local server binds to `127.0.0.1` only. Its update API checks `Host`, `Origi
 ├── styles.css
 ├── app.js
 ├── tools/
+│   ├── export_browser_history.py
 │   ├── export_chrome_history.py
 │   └── local_server.py
 ├── README.md

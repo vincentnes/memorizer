@@ -51,6 +51,7 @@ app.js
 index.html
 styles.css
 tools/export_browser_history.py
+tools/export_chrome_history.py
 tools/local_server.py
 ```
 
