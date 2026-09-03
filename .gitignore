@@ -1,0 +1,19 @@
+# Personal browsing data and generated exports
+chrome_history_export.json
+*_history_export.json
+exports/
+
+# Python cache and local runtime files
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Logs
+*.log

@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Memorizer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Attention & Memory</p>
+          <h1>Memorizer</h1>
+        </div>
+        <div class="top-actions">
+          <div class="mode-switch" aria-label="功能切換">
+            <button id="memoryModeButton" class="mode-button active" type="button" data-i18n="memoryMode">記憶訓練</button>
+            <button id="chromeModeButton" class="mode-button" type="button" data-i18n="chromeMode">Chrome 分析</button>
+          </div>
+          <button id="languageToggleButton" class="secondary-button" type="button">English</button>
+          <button id="loadSampleButton" class="secondary-button" type="button" data-i18n="loadSample">載入範例</button>
+          <label class="file-button">
+            <span data-i18n="importChromeJson">匯入 Chrome JSON</span>
+            <input id="historyFile" type="file" accept=".json,application/json" />
+          </label>
+        </div>
+      </header>
+
+      <section id="memoryTrainerView" class="memory-trainer">
+        <section class="trainer">
+          <aside class="source-panel" aria-labelledby="sourceTitle">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Step 1</p>
+                <h2 id="sourceTitle" data-i18n="sourceTitle">放入一段文字</h2>
+              </div>
+              <div class="inline-actions">
+                <button class="secondary-button compact" id="pasteClipboardButton" type="button" data-i18n="pasteClipboard">載入剪貼簿</button>
+                <button class="secondary-button compact" id="sampleArticleButton" type="button" data-i18n="sampleArticle">範例文章</button>
+              </div>
+            </div>
+
+            <label for="sourceText" data-i18n="article">文章</label>
+            <textarea id="sourceText" class="source-text" spellcheck="false" placeholder="貼上你剛讀完、想訓練複述的段落。" data-i18n-placeholder="sourcePlaceholder"></textarea>
+            <p id="clipboardStatus" class="field-note" aria-live="polite"></p>
+
+            <div class="memory-settings">
+              <label>
+                <span data-i18n="readSeconds">閱讀秒數</span>
+                <input id="readSeconds" type="number" min="20" max="600" step="10" value="90" />
+              </label>
+              <label>
+                <span data-i18n="targetPoints">目標重點</span>
+                <input id="targetPoints" type="number" min="2" max="8" step="1" value="4" />
+              </label>
+            </div>
+
+            <div class="button-row">
+              <button id="startReadingButton" class="primary-button" type="button" data-i18n="startReading">開始閱讀</button>
+              <button id="resetMemoryButton" class="secondary-button" type="button" data-i18n="reset">重置</button>
+            </div>
+          </aside>
+
+          <section class="practice-panel" aria-labelledby="practiceTitle">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Recall Practice</p>
+                <h2 id="practiceTitle" data-i18n="practiceTitle">關閉原文後複述</h2>
+              </div>
+              <div class="session-status" aria-live="polite">
+                <span id="phaseLabel">準備</span>
+                <strong id="timerLabel">00:00</strong>
+              </div>
+            </div>
+
+            <div id="readingView" class="reading-view">
+              <div class="article-card">
+                <p id="readingText">按下「開始閱讀」後，文章會出現在這裡。時間到後原文會自動收起。</p>
+              </div>
+              <button id="hideNowButton" class="secondary-button wide" type="button" disabled data-i18n="recallNow">現在開始回想</button>
+            </div>
+
+            <div id="recallView" class="recall-view hidden">
+              <label for="recallText" data-i18n="recallLabel">不要看原文，先寫下你記得的主要內容</label>
+              <textarea id="recallText" class="recall-text" placeholder="用自己的話列出主要內容。卡住時先寫零碎片段也可以。" data-i18n-placeholder="recallPlaceholder"></textarea>
+              <div class="button-row">
+                <button id="hintButton" class="secondary-button" type="button" data-i18n="lowHint">給我低提示</button>
+                <button id="structureButton" class="secondary-button" type="button" data-i18n="structureHint">給我結構提示</button>
+                <button id="finishRecallButton" class="primary-button" type="button" data-i18n="reviewStart">進入校準</button>
+              </div>
+              <div id="hintBox" class="hint-box" aria-live="polite"></div>
+            </div>
+
+            <div id="reviewView" class="review-view hidden">
+              <div class="review-grid">
+                <section>
+                  <h3 data-i18n="yourRecall">你的複述</h3>
+                  <div id="recallPreview" class="review-box"></div>
+                </section>
+                <section>
+                  <h3 data-i18n="originalText">原文</h3>
+                  <div id="sourcePreview" class="review-box"></div>
+                </section>
+              </div>
+
+              <div class="score-panel">
+                <label for="scoreSlider" data-i18n="scoreQuestion">這次抓住了幾成重點？</label>
+                <input id="scoreSlider" type="range" min="0" max="5" value="3" />
+                <span id="scoreLabel">3 / 5</span>
+              </div>
+
+              <label for="missingText" data-i18n="missingLabel">補上漏掉的重點</label>
+              <textarea id="missingText" class="missing-text" placeholder="寫下剛剛沒有想起來、但下次要抓住的重點。" data-i18n-placeholder="missingPlaceholder"></textarea>
+
+              <div class="button-row">
+                <button id="saveSessionButton" class="primary-button" type="button" data-i18n="saveSession">儲存訓練紀錄</button>
+                <button id="newRoundButton" class="secondary-button" type="button" data-i18n="newRound">再練一次</button>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="history-panel" aria-labelledby="historyTitle">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Progress</p>
+              <h2 id="historyTitle" data-i18n="historyTitle">訓練紀錄</h2>
+            </div>
+            <button id="clearHistoryButton" class="secondary-button compact" type="button" data-i18n="clearHistory">清除紀錄</button>
+          </div>
+          <div id="historyList" class="history-list"></div>
+        </section>
+      </section>
+
+      <section id="chromeAnalyzerView" class="chrome-analyzer hidden">
+      <section class="control-panel" aria-labelledby="controlsTitle">
+        <div>
+          <p class="eyebrow">Time Window</p>
+          <h2 id="controlsTitle" data-i18n="controlsTitle">選擇要分析的時間</h2>
+        </div>
+        <div class="controls-grid">
+          <label>
+            <span data-i18n="start">開始</span>
+            <input id="startDate" type="datetime-local" />
+          </label>
+          <label>
+            <span data-i18n="end">結束</span>
+            <input id="endDate" type="datetime-local" />
+          </label>
+          <label>
+            <span data-i18n="minSeconds">最少停留秒數</span>
+            <input id="minSeconds" type="number" min="0" step="5" value="0" />
+          </label>
+          <label>
+            <span data-i18n="search">搜尋</span>
+            <input id="searchText" type="search" placeholder="網域、標題或分類" data-i18n-placeholder="searchPlaceholder" />
+          </label>
+        </div>
+      </section>
+
+      <section id="jsonStatusPanel" class="json-status-panel hidden" aria-live="polite">
+        <div>
+          <p class="eyebrow">Imported JSON</p>
+          <h2 id="jsonGeneratedAt">尚未匯入 Chrome JSON</h2>
+          <p id="jsonUpdateStatus">匯入後可在這裡更新資料。</p>
+        </div>
+        <div class="json-actions">
+          <button id="updateJsonButton" class="primary-button" type="button" data-i18n="updateJson">更新 JSON</button>
+          <button id="dismissJsonPromptButton" class="secondary-button" type="button" data-i18n="later">稍後</button>
+        </div>
+      </section>
+
+      <section class="summary-grid" aria-label="分析摘要">
+        <article class="metric-card">
+          <span data-i18n="visitCount">瀏覽次數</span>
+          <strong id="visitCount">0</strong>
+        </article>
+        <article class="metric-card">
+          <span data-i18n="domainCount">不同網站</span>
+          <strong id="domainCount">0</strong>
+        </article>
+        <article class="metric-card">
+          <span data-i18n="totalTime">估計時間</span>
+          <strong id="totalTime">0 分</strong>
+        </article>
+        <article class="metric-card">
+          <span data-i18n="topCategory">最大分類</span>
+          <strong id="topCategory">尚無資料</strong>
+        </article>
+      </section>
+
+      <section class="dashboard">
+        <section class="chart-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Content Mix</p>
+              <h2 data-i18n="contentMix">內容分類</h2>
+            </div>
+            <span id="categoryCaption" class="caption">匯入資料後顯示</span>
+          </div>
+          <canvas id="categoryChart" width="720" height="320"></canvas>
+          <div id="categoryLegend" class="legend"></div>
+        </section>
+
+        <section class="chart-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Rhythm</p>
+              <h2 data-i18n="hourlyVisits">每小時瀏覽量</h2>
+            </div>
+            <span id="hourCaption" class="caption">0 筆</span>
+          </div>
+          <canvas id="hourChart" width="720" height="320"></canvas>
+        </section>
+      </section>
+
+      <section class="detail-grid">
+        <section class="table-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Domains</p>
+              <h2 data-i18n="domainRanking">網站排行</h2>
+            </div>
+          </div>
+          <div id="domainList" class="rank-list"></div>
+        </section>
+
+        <section class="table-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Visits</p>
+              <h2 data-i18n="visitDetails">瀏覽明細</h2>
+            </div>
+            <button id="clearDrilldownButton" class="secondary-button compact hidden" type="button" data-i18n="showAll">顯示全部</button>
+          </div>
+          <p id="drilldownStatus" class="drilldown-status">點任一圖表的 bar，可以在這裡查看對應的詳細 log。</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="time">時間</th>
+                  <th data-i18n="category">分類</th>
+                  <th data-i18n="domain">網站</th>
+                  <th data-i18n="page">網頁</th>
+                  <th data-i18n="link">連結</th>
+                  <th data-i18n="training">訓練</th>
+                </tr>
+              </thead>
+              <tbody id="visitRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="export-panel">
+        <div>
+          <p class="eyebrow">Local Export</p>
+          <h2 data-i18n="howToExport">如何產生 Chrome JSON</h2>
+          <p>
+            關閉 Chrome 後，在這個專案資料夾執行
+            <code>python tools/export_chrome_history.py --days 7</code>。
+            它會複製本機 Chrome History 資料庫，只輸出網址、標題、時間、估計停留秒數和分類。
+            若要把可讀取的網頁正文也一起帶進來，可執行
+            <code>python tools/export_chrome_history.py --days 7 --fetch-content</code>。
+            如果正文在右邊主欄，使用
+            <code>python tools/export_chrome_history.py --days 7 --fetch-content --content-region right</code>。
+            若要讓「更新 JSON」按鈕自動執行 Python，請用
+            <code>python tools/local_server.py</code>
+            啟動本機 app。
+          </p>
+        </div>
+        <code id="outputHint">輸出檔：chrome_history_export.json</code>
+      </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
