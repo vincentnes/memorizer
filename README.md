@@ -14,6 +14,10 @@ It helps with a common problem: you read something and understand it, but cannot
 - Bilingual UI: switch between Traditional Chinese and English.
 - Local update API: when served from `tools/local_server.py`, the app can regenerate browsing data JSON from your machine.
 
+## Roadmap
+
+See PROJECT_PLAN.md for the product plan, including article library, spaced review, better recall modes, browsing-time productization, dashboard, privacy, and desktop packaging work.
+
 ## Quick Start
 
 Run the local server:
