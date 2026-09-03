@@ -144,6 +144,14 @@
         </div>
         <div class="controls-grid">
           <label>
+            <span data-i18n="browser">瀏覽器</span>
+            <select id="browserSelect">
+              <option value="chrome">Chrome</option>
+              <option value="edge">Edge</option>
+              <option value="firefox">Firefox</option>
+            </select>
+          </label>
+          <label>
             <span data-i18n="start">開始</span>
             <input id="startDate" type="datetime-local" />
           </label>
@@ -261,19 +269,19 @@
           <p class="eyebrow" data-i18n="localExport">Local Export</p>
           <h2 data-i18n="howToExport">如何產生瀏覽資料</h2>
           <p>
-            <span data-i18n="exportStepCloseChrome">關閉 Chrome 後，在這個專案資料夾執行</span>
-            <code>python tools/export_chrome_history.py --days 7</code>。
-            <span data-i18n="exportStepBasic">它會複製本機 Chrome History 資料庫，只輸出網址、標題、時間、估計停留秒數和分類。</span>
+            <span data-i18n="exportStepCloseChrome">關閉目標瀏覽器後，在這個專案資料夾執行</span>
+            <code>python tools/export_browser_history.py --browser chrome --days 7</code>。
+            <span data-i18n="exportStepBasic">它會複製本機瀏覽器歷史資料庫，只輸出網址、標題、時間、估計停留秒數和分類。</span>
             <span data-i18n="exportStepContent">若要把可讀取的網頁正文也一起帶進來，可執行</span>
-            <code>python tools/export_chrome_history.py --days 7 --fetch-content</code>。
+            <code>python tools/export_browser_history.py --browser edge --days 7 --fetch-content</code>。
             <span data-i18n="exportStepRight">如果正文在右邊主欄，使用</span>
-            <code>python tools/export_chrome_history.py --days 7 --fetch-content --content-region right</code>。
+            <code>python tools/export_browser_history.py --browser firefox --days 7 --fetch-content --content-region right</code>。
             <span data-i18n="exportStepServer">若要讓「更新 JSON」按鈕自動執行 Python，請用</span>
             <code>python tools/local_server.py</code>
             <span data-i18n="exportStepServerEnd">啟動本機 app。</span>
           </p>
         </div>
-        <code id="outputHint"><span data-i18n="outputFile">輸出檔</span>：chrome_history_export.json</code>
+        <code id="outputHint"><span data-i18n="outputFile">輸出檔</span>：browser_history_export.json</code>
       </section>
       </section>
     </main>
@@ -281,6 +289,11 @@
     <script src="app.js"></script>
   </body>
 </html>
+
+
+
+
+
 
 
 

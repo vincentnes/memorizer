@@ -1,4 +1,5 @@
 # Personal browsing data and generated exports
+browser_history_export.json
 chrome_history_export.json
 *_history_export.json
 exports/
@@ -17,3 +18,4 @@ Thumbs.db
 
 # Logs
 *.log
+

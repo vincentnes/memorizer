@@ -1,4 +1,5 @@
 const historyFile = document.querySelector("#historyFile");
+const browserSelect = document.querySelector("#browserSelect");
 const loadSampleButton = document.querySelector("#loadSampleButton");
 const startDate = document.querySelector("#startDate");
 const endDate = document.querySelector("#endDate");
@@ -138,6 +139,7 @@ const translations = {
     historyTitle: "訓練紀錄",
     clearHistory: "清除紀錄",
     controlsTitle: "選擇要分析的時間",
+    browser: "瀏覽器",
     start: "開始",
     end: "結束",
     minSeconds: "最少停留秒數",
@@ -164,8 +166,8 @@ const translations = {
     sendToTraining: "送到訓練",
     localExport: "Local Export",
     howToExport: "如何產生瀏覽資料",
-    exportStepCloseChrome: "關閉 Chrome 後，在這個專案資料夾執行",
-    exportStepBasic: "它會複製本機 Chrome History 資料庫，只輸出網址、標題、時間、估計停留秒數和分類。",
+    exportStepCloseChrome: "關閉目標瀏覽器後，在這個專案資料夾執行",
+    exportStepBasic: "它會複製本機瀏覽器歷史資料庫，只輸出網址、標題、時間、估計停留秒數和分類。",
     exportStepContent: "若要把可讀取的網頁正文也一起帶進來，可執行",
     exportStepRight: "如果正文在右邊主欄，使用",
     exportStepServer: "若要讓「更新 JSON」按鈕自動執行 Python，請用",
@@ -196,14 +198,14 @@ const translations = {
     clipboardEmpty: "剪貼簿沒有可貼上的文字。",
     clipboardBlocked: "無法讀取剪貼簿。請確認瀏覽器允許剪貼簿權限，或手動貼上。",
     jsonGeneratedAt: "JSON 產生時間：{time}",
-    jsonAskUpdate: "要重新讀取 Chrome 歷史並更新這份 JSON 嗎？",
+    jsonAskUpdate: "要重新讀取選定瀏覽器的歷史紀錄並更新這份 JSON 嗎？",
     fileModeBlocked: "目前是直接打開 HTML，瀏覽器不能執行本機 Python。請先在專案資料夾執行 python tools/local_server.py，再用 http://127.0.0.1:8765 開啟。",
     updatingJson: "正在執行匯出器並重新產生 JSON...",
     updatedJson: "已更新：{count} 筆瀏覽紀錄。",
     updateFailed: "更新失敗：{message}",
     detailCategory: "目前顯示「{value}」分類的瀏覽 log。",
     detailHour: "目前顯示 {value}:00-{value}:59 的瀏覽 log。",
-    noFetchedContent: "這筆 Chrome 歷史只有標題和連結，沒有網頁正文。重新匯出時加上 --fetch-content，若該頁允許讀取，這裡就會帶入可複述的正文。",
+    noFetchedContent: "這筆瀏覽紀錄只有標題和連結，沒有網頁正文。重新匯出時加上 --fetch-content，若該頁允許讀取，這裡就會帶入可複述的正文。",
   },
   en: {
     memoryMode: "Memory Training",
@@ -245,6 +247,7 @@ const translations = {
     historyTitle: "Training History",
     clearHistory: "Clear History",
     controlsTitle: "Choose Time Range",
+    browser: "Browser",
     start: "Start",
     end: "End",
     minSeconds: "Min Dwell Seconds",
@@ -271,8 +274,8 @@ const translations = {
     sendToTraining: "Train",
     localExport: "Local Export",
     howToExport: "How To Generate Browsing Data",
-    exportStepCloseChrome: "After closing Chrome, run this in the project folder",
-    exportStepBasic: "It copies the local Chrome History database and exports URL, title, time, estimated dwell seconds, and category.",
+    exportStepCloseChrome: "After closing the target browser, run this in the project folder",
+    exportStepBasic: "It copies the local browser history database and exports URL, title, time, estimated dwell seconds, and category.",
     exportStepContent: "To include readable page text, run",
     exportStepRight: "If the article body is in the right content column, use",
     exportStepServer: "To let the Update JSON button run Python automatically, start the local app with",
@@ -303,14 +306,14 @@ const translations = {
     clipboardEmpty: "Clipboard has no text to paste.",
     clipboardBlocked: "Could not read the clipboard. Allow clipboard permission in the browser, or paste manually.",
     jsonGeneratedAt: "JSON generated at: {time}",
-    jsonAskUpdate: "Read Chrome history again and update this JSON file?",
+    jsonAskUpdate: "Read the selected browser history again and update this JSON file?",
     fileModeBlocked: "This page is opened directly as HTML, so the browser cannot run local Python. Run python tools/local_server.py in the project folder, then open http://127.0.0.1:8765.",
     updatingJson: "Running the exporter and regenerating JSON...",
     updatedJson: "Updated: {count} visits.",
     updateFailed: "Update failed: {message}",
     detailCategory: "Showing visit logs in the \"{value}\" category.",
     detailHour: "Showing visit logs from {value}:00-{value}:59.",
-    noFetchedContent: "This Chrome history item only has a title and link, not page text. Export again with --fetch-content; if the page allows reading, the text will be available for recall practice.",
+    noFetchedContent: "This browsing history item only has a title and link, not page text. Export again with --fetch-content; if the page allows reading, the text will be available for recall practice.",
   },
 };
 
@@ -593,7 +596,7 @@ function sampleVisits() {
     url: `https://${domain}/`,
     category,
     durationSeconds,
-    content: `${title}\n\n這是一段範例網頁內容。你可以按「送到訓練」，它會切回記憶訓練，並把這段內容放進文章框。真正的 Chrome 匯出若加上 --fetch-content，這裡會是抓到的網頁正文。`,
+    content: `${title}\n\n這是一段範例網頁內容。你可以按「送到訓練」，它會切回記憶訓練，並把這段內容放進文章框。真正的瀏覽資料匯出若加上 --fetch-content，這裡會是抓到的網頁正文。`,
   }));
 }
 
@@ -976,6 +979,9 @@ function showJsonPrompt(payload, fileName) {
     start: payload.start,
     end: payload.end,
   };
+  if (payload.browser) {
+    browserSelect.value = payload.browser;
+  }
   jsonGeneratedAt.textContent = t("jsonGeneratedAt", { time: localDateTimeLabel(payload.exportedAt) });
   jsonUpdateStatus.textContent = t("jsonAskUpdate");
   updateJsonButton.disabled = false;
@@ -1010,7 +1016,8 @@ async function updateImportedJson() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        output: importedJsonMeta?.fileName || "chrome_history_export.json",
+        output: importedJsonMeta?.fileName || "browser_history_export.json",
+        browser: browserSelect.value,
         days: daysFromImportedRange(),
         start: startDate.value ? new Date(startDate.value).toISOString() : undefined,
         end: endDate.value ? new Date(endDate.value).toISOString() : undefined,
@@ -1023,7 +1030,7 @@ async function updateImportedJson() {
       throw new Error(payload.error || "更新失敗");
     }
     loadVisits(payload.visits || []);
-    showJsonPrompt(payload, payload.output || importedJsonMeta?.fileName || "chrome_history_export.json");
+    showJsonPrompt(payload, payload.output || importedJsonMeta?.fileName || "browser_history_export.json");
     jsonUpdateStatus.textContent = t("updatedJson", { count: payload.visits?.length || 0 });
   } catch (error) {
     jsonUpdateStatus.textContent = t("updateFailed", { message: error.message });
@@ -1123,6 +1130,11 @@ setDefaultDates();
 loadVisits([]);
 setAppMode("memory");
 applyLanguage();
+
+
+
+
+
 
 
 

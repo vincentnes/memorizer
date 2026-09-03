@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the Memorizer app with a local API for updating Chrome history JSON."""
+"""Run the Memorizer app with a local API for updating browser history JSON."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from tools.export_chrome_history import export_history
+from tools.export_browser_history import export_history
 
 
 MAX_BODY_BYTES = 32_768
@@ -24,6 +24,7 @@ MAX_CONTENT_CHARS = 20_000
 ALLOWED_HOSTS = {"127.0.0.1:8765", "localhost:8765"}
 ALLOWED_ORIGINS = {"http://127.0.0.1:8765", "http://localhost:8765"}
 ALLOWED_CONTENT_REGIONS = {"main", "right", "all"}
+ALLOWED_BROWSERS = {"chrome", "edge", "firefox"}
 
 
 class MemorizerHandler(SimpleHTTPRequestHandler):
@@ -66,12 +67,16 @@ class MemorizerHandler(SimpleHTTPRequestHandler):
         return True
 
     def update_history(self, request: dict) -> dict:
-        output_name = Path(request.get("output") or "chrome_history_export.json").name
+        output_name = Path(request.get("output") or "browser_history_export.json").name
         output_path = ROOT / output_name
         content_region = request.get("contentRegion") or "right"
         if content_region not in ALLOWED_CONTENT_REGIONS:
             content_region = "right"
+        browser = request.get("browser") or "chrome"
+        if browser not in ALLOWED_BROWSERS:
+            browser = "chrome"
         args = SimpleNamespace(
+            browser=browser,
             profile=request.get("profile") or "Default",
             history_path=None,
             days=max(1, min(int(request.get("days") or 7), MAX_DAYS)),
@@ -108,3 +113,10 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+

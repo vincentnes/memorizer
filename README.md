@@ -1,14 +1,14 @@
 # Memorizer
 
-Memorizer is a local-first memory training and Chrome browsing analysis app.
+Memorizer is a local-first memory training and browser-time analysis app.
 
-It helps with a common problem: you read something and understand it, but cannot recall the main points later. The app combines active recall practice with a private Chrome history dashboard, so useful pages from your browsing history can be sent into memory training.
+It helps with a common problem: you read something and understand it, but cannot recall the main points later. The app combines active recall practice with a private browsing-time dashboard, so useful pages from your browsing history can be sent into memory training.
 
 ## Features
 
 - Memory training flow: paste a passage, read under a timer, hide the source, recall, compare, and save missed points.
 - Clipboard import: load text from your clipboard directly into the training passage box.
-- Chrome history analysis: import exported Chrome history JSON, filter by time, classify content, and view charts.
+- Browsing time analysis: import exported Chrome, Edge, or Firefox history JSON, filter by time, classify content, and view charts.
 - Chart drilldown: click a bar in the category or hourly chart to show matching visit logs.
 - Visit-to-training: send a visit's fetched page content, title, and link into memory training.
 - Bilingual UI: switch between Traditional Chinese and English.
@@ -32,29 +32,31 @@ You can also open `index.html` directly, but direct file mode cannot run local P
 
 ## Export Browsing Data
 
-Close Chrome first if the history database is locked, then run:
+Supported browsers: Chrome, Microsoft Edge, and Firefox.
+
+Close the target browser first if the history database is locked, then run:
 
 ```powershell
-python tools/export_chrome_history.py --days 7
+python tools/export_browser_history.py --browser chrome --days 7
 ```
 
 To include readable page text:
 
 ```powershell
-python tools/export_chrome_history.py --days 7 --fetch-content
+python tools/export_browser_history.py --browser edge --days 7 --fetch-content
 ```
 
 For sites where the main article is in a right-side content column:
 
 ```powershell
-python tools/export_chrome_history.py --days 7 --fetch-content --content-region right
+python tools/export_browser_history.py --browser firefox --days 7 --fetch-content --content-region right
 ```
 
-Then import `chrome_history_export.json` in the Browsing Time view.
+Then import `browser_history_export.json` in the Browsing Time view.
 
 ## Privacy And Security
 
-Memorizer is designed to run locally. Chrome history and fetched page content can be highly sensitive, so generated JSON exports are ignored by git through `.gitignore`.
+Memorizer is designed to run locally. Browser history and fetched page content can be highly sensitive, so generated JSON exports are ignored by git through `.gitignore`.
 
 Before uploading to GitHub, check:
 
@@ -62,7 +64,7 @@ Before uploading to GitHub, check:
 git status --short
 ```
 
-Make sure no `chrome_history_export.json`, `exports/`, browser history database, or personal notes are staged.
+Make sure no `browser_history_export.json`, `exports/`, browser history database, or personal notes are staged.
 
 The local server binds to `127.0.0.1` only. Its update API checks `Host`, `Origin`, and `Referer`, caps request size and export range, and does not accept arbitrary `historyPath` values from the browser.
 
@@ -85,7 +87,7 @@ The local server binds to `127.0.0.1` only. Its update API checks `Host`, `Origi
 
 ```powershell
 node --check app.js
-python -m py_compile tools/export_chrome_history.py tools/local_server.py
+python -m py_compile tools/export_browser_history.py tools/export_chrome_history.py tools/local_server.py
 ```
 
 ## GitHub Preparation
@@ -100,7 +102,7 @@ git status --short
 Stage only source and docs:
 
 ```powershell
-git add index.html styles.css app.js tools/export_chrome_history.py tools/local_server.py README.md SECURITY.md .gitignore
+git add index.html styles.css app.js tools/export_browser_history.py tools/export_chrome_history.py tools/local_server.py README.md SECURITY.md .gitignore
 git commit -m "Initial Memorizer app"
 ```
 
@@ -111,4 +113,9 @@ git remote add origin https://github.com/YOUR_NAME/memorizer.git
 git branch -M main
 git push -u origin main
 ```
+
+
+
+
+
 

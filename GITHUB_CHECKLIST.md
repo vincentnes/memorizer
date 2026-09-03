@@ -8,20 +8,20 @@ Run:
 
 ```powershell
 git status --short --ignored
-git check-ignore -v chrome_history_export.json
+git check-ignore -v browser_history_export.json
 ```
 
 Expected:
 
 - Source files and docs may appear as untracked or staged.
-- `chrome_history_export.json` should appear as ignored.
-- No browser history exports, raw Chrome `History` files, personal URLs, or private notes should be staged.
+- `browser_history_export.json` should appear as ignored.
+- No browser history exports, raw browser history database files, personal URLs, or private notes should be staged.
 
 ## 2. Run Development Checks
 
 ```powershell
 node --check app.js
-python -m py_compile tools/export_chrome_history.py tools/local_server.py
+python -m py_compile tools/export_browser_history.py tools/export_chrome_history.py tools/local_server.py
 ```
 
 If Python creates `tools/__pycache__/`, leave it untracked. It is ignored by `.gitignore`.
@@ -31,7 +31,7 @@ If Python creates `tools/__pycache__/`, leave it untracked. It is ignored by `.g
 ```powershell
 git add .gitignore README.md SECURITY.md GITHUB_CHECKLIST.md
 git add index.html styles.css app.js
-git add tools/export_chrome_history.py tools/local_server.py
+git add tools/export_browser_history.py tools/export_chrome_history.py tools/local_server.py
 ```
 
 Check staged files:
@@ -50,7 +50,7 @@ SECURITY.md
 app.js
 index.html
 styles.css
-tools/export_chrome_history.py
+tools/export_browser_history.py
 tools/local_server.py
 ```
 
@@ -72,7 +72,9 @@ git push -u origin main
 
 ## 6. After Publishing
 
-- Do not upload `chrome_history_export.json`.
+- Do not upload `browser_history_export.json`.
 - Do not paste private browsing history into public issues.
 - Keep the local server bound to `127.0.0.1`.
 - Review `SECURITY.md` if you change the update API.
+
+
