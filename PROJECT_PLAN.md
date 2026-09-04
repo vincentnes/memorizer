@@ -89,6 +89,24 @@ Already implemented:
 - send visit content into memory training
 - local-first safety documentation
 
+## Phase 1 First Implementation Slice
+
+Implemented in the current local-first version:
+
+- Article title field in Memory Training.
+- Save Article from the passage box.
+- Article Library panel with search/filter.
+- Load saved articles back into Memory Training.
+- Add browsing visits to Article Library from Visit Details.
+- Visit learning status in the Visits table: Not reviewed, Needs content, Added, Trained.
+- Recall attempts linked to saved articles.
+
+Still remaining for the full phase:
+
+- Tags and richer filters.
+- Dedicated import/export for saved training data.
+- Better article editing controls.
+- Stronger migration path from localStorage to IndexedDB or SQLite.
 ## Phase 1: Article Library And Training Records
 
 Goal: make browsing visits and training sessions persist as one useful learning record.

@@ -36,10 +36,15 @@
                 <h2 id="sourceTitle" data-i18n="sourceTitle">放入一段文字</h2>
               </div>
               <div class="inline-actions">
+                
+                <button class="secondary-button compact" id="saveArticleButton" type="button" data-i18n="saveArticle">儲存文章</button>
                 <button class="secondary-button compact" id="pasteClipboardButton" type="button" data-i18n="pasteClipboard">載入剪貼簿</button>
                 <button class="secondary-button compact" id="sampleArticleButton" type="button" data-i18n="sampleArticle">範例文章</button>
               </div>
             </div>
+
+            <label for="articleTitleInput" data-i18n="articleTitle">文章標題</label>
+            <input id="articleTitleInput" type="text" placeholder="可留空，系統會用第一行當標題。" data-i18n-placeholder="articleTitlePlaceholder" />
 
             <label for="sourceText" data-i18n="article">文章</label>
             <textarea id="sourceText" class="source-text" spellcheck="false" placeholder="貼上你剛讀完、想訓練複述的段落。" data-i18n-placeholder="sourcePlaceholder"></textarea>
@@ -124,6 +129,20 @@
           </section>
         </section>
 
+
+        <section class="history-panel" aria-labelledby="articleLibraryTitle">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Library</p>
+              <h2 id="articleLibraryTitle" data-i18n="articleLibraryTitle">文章庫</h2>
+            </div>
+            <label class="compact-search">
+              <span data-i18n="filterArticles">篩選文章</span>
+              <input id="articleSearchInput" type="search" placeholder="標題、來源或標籤" data-i18n-placeholder="articleSearchPlaceholder" />
+            </label>
+          </div>
+          <div id="articleLibraryList" class="article-library-list"></div>
+        </section>
         <section class="history-panel" aria-labelledby="historyTitle">
           <div class="panel-heading">
             <div>
@@ -255,6 +274,7 @@
                   <th data-i18n="domain">網站</th>
                   <th data-i18n="page">網頁</th>
                   <th data-i18n="link">連結</th>
+                  <th data-i18n="learningStatus">狀態</th>
                   <th data-i18n="training">訓練</th>
                 </tr>
               </thead>

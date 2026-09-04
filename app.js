@@ -29,11 +29,13 @@ const languageToggleButton = document.querySelector("#languageToggleButton");
 const memoryTrainerView = document.querySelector("#memoryTrainerView");
 const chromeAnalyzerView = document.querySelector("#chromeAnalyzerView");
 const sourceText = document.querySelector("#sourceText");
+const articleTitleInput = document.querySelector("#articleTitleInput");
 const readSeconds = document.querySelector("#readSeconds");
 const targetPoints = document.querySelector("#targetPoints");
 const pasteClipboardButton = document.querySelector("#pasteClipboardButton");
 const clipboardStatus = document.querySelector("#clipboardStatus");
 const sampleArticleButton = document.querySelector("#sampleArticleButton");
+const saveArticleButton = document.querySelector("#saveArticleButton");
 const startReadingButton = document.querySelector("#startReadingButton");
 const resetMemoryButton = document.querySelector("#resetMemoryButton");
 const hideNowButton = document.querySelector("#hideNowButton");
@@ -50,6 +52,8 @@ const saveSessionButton = document.querySelector("#saveSessionButton");
 const newRoundButton = document.querySelector("#newRoundButton");
 const clearHistoryButton = document.querySelector("#clearHistoryButton");
 const historyList = document.querySelector("#historyList");
+const articleSearchInput = document.querySelector("#articleSearchInput");
+const articleLibraryList = document.querySelector("#articleLibraryList");
 const timerLabel = document.querySelector("#timerLabel");
 const phaseLabel = document.querySelector("#phaseLabel");
 const memoryViews = {
@@ -91,6 +95,8 @@ let currentLanguage = localStorage.getItem("memorizer.language") || "zh";
 const chartHitboxes = new WeakMap();
 let countdownId = null;
 let remainingSeconds = 0;
+let currentArticleId = null;
+let currentSourceVisit = null;
 
 const sampleArticle = `人的記憶不是像硬碟一樣把資訊完整存進去，而更像是一套重建系統。閱讀時覺得懂，通常代表你能跟著作者的線索走；但複述時必須自己產生線索，這是另一種能力。
 
@@ -107,6 +113,29 @@ const translations = {
     sourceTitle: "放入一段文字",
     pasteClipboard: "載入剪貼簿",
     sampleArticle: "範例文章",
+    saveArticle: "儲存文章",
+    articleTitle: "文章標題",
+    articleTitlePlaceholder: "可留空，系統會用第一行當標題。",
+    articleSaved: "文章已儲存到文章庫。",
+    articleLoaded: "已載入文章。",
+    articleLibraryTitle: "文章庫",
+    filterArticles: "篩選文章",
+    articleSearchPlaceholder: "標題、來源或標籤",
+    noArticles: "還沒有文章。從文字框儲存，或在瀏覽明細中加入文章庫。",
+    loadArticle: "載入",
+    addToLibrary: "加入文章庫",
+    addedToLibrary: "已加入",
+    attemptsUnit: "次練習",
+    sourceVisit: "來源瀏覽",
+    noSourceUrl: "手動輸入",
+    learningStatus: "狀態",
+    notReviewed: "未處理",
+    notUseful: "不需記憶",
+    needsContent: "需補內容",
+    added: "已加入",
+    trained: "已訓練",
+    dueForReview: "待複習",
+    mastered: "已掌握",
     article: "文章",
     sourcePlaceholder: "貼上你剛讀完、想訓練複述的段落。",
     readSeconds: "閱讀秒數",
@@ -215,6 +244,29 @@ const translations = {
     sourceTitle: "Add A Passage",
     pasteClipboard: "Load Clipboard",
     sampleArticle: "Sample Passage",
+    saveArticle: "Save Article",
+    articleTitle: "Article Title",
+    articleTitlePlaceholder: "Optional. The first line will be used if blank.",
+    articleSaved: "Article saved to library.",
+    articleLoaded: "Article loaded.",
+    articleLibraryTitle: "Article Library",
+    filterArticles: "Filter Articles",
+    articleSearchPlaceholder: "Title, source, or tag",
+    noArticles: "No articles yet. Save from the passage box or add one from Visit Details.",
+    loadArticle: "Load",
+    addToLibrary: "Add to Library",
+    addedToLibrary: "Added",
+    attemptsUnit: "attempts",
+    sourceVisit: "Source visit",
+    noSourceUrl: "Manual entry",
+    learningStatus: "Status",
+    notReviewed: "Not reviewed",
+    notUseful: "Not useful",
+    needsContent: "Needs content",
+    added: "Added",
+    trained: "Trained",
+    dueForReview: "Due",
+    mastered: "Mastered",
     article: "Passage",
     sourcePlaceholder: "Paste a passage you just read and want to practice recalling.",
     readSeconds: "Reading Seconds",
@@ -362,6 +414,7 @@ function applyLanguage() {
     jsonUpdateStatus.textContent = t("jsonIdle");
   }
   renderMemoryHistory();
+  renderArticleLibrary();
   render();
 }
 
@@ -503,6 +556,248 @@ function saveMemoryHistory(history) {
   localStorage.setItem("memorizer.sessions", JSON.stringify(history));
 }
 
+function loadArticles() {
+  try {
+    return JSON.parse(localStorage.getItem("memorizer.articles") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveArticles(articles) {
+  localStorage.setItem("memorizer.articles", JSON.stringify(articles));
+}
+
+function createId(prefix) {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function sourceVisitKey(visit) {
+  if (!visit) {
+    return "";
+  }
+  return visit.sourceVisitKey || `${visit.browser || browserSelect.value || "unknown"}|${visit.visitedAt || ""}|${visit.url || ""}`;
+}
+
+function inferArticleTitle(text) {
+  const explicit = articleTitleInput.value.trim();
+  if (explicit) {
+    return explicit;
+  }
+  const firstLine = text.split(/\n+/).find((line) => line.trim())?.trim() || t("article");
+  return firstLine.length > 80 ? `${firstLine.slice(0, 80)}...` : firstLine;
+}
+
+function articleDateLabel(value) {
+  if (!value) {
+    return "";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return date.toLocaleString(localeName(), {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function articleStatus(article) {
+  if (article.status) {
+    return article.status;
+  }
+  if (article.attempts?.length) {
+    return "trained";
+  }
+  if (!article.content?.trim()) {
+    return "needsContent";
+  }
+  return "added";
+}
+
+function statusLabel(status) {
+  const keys = {
+    notReviewed: "notReviewed",
+    notUseful: "notUseful",
+    needsContent: "needsContent",
+    added: "added",
+    trained: "trained",
+    dueForReview: "dueForReview",
+    mastered: "mastered",
+  };
+  return t(keys[status] || "notReviewed");
+}
+
+function findArticleForVisit(visit, articles = loadArticles()) {
+  const key = sourceVisitKey(visit);
+  return articles.find((article) => (
+    (key && article.sourceVisitKey === key) ||
+    (visit.url && article.sourceUrl === visit.url)
+  ));
+}
+
+function visitLearningStatus(visit, articles = loadArticles()) {
+  const article = findArticleForVisit(visit, articles);
+  if (!article) {
+    return visit.content?.trim() ? "notReviewed" : "needsContent";
+  }
+  return articleStatus(article);
+}
+
+function saveCurrentArticle(options = {}) {
+  const text = getCleanSource();
+  if (!text && !currentSourceVisit) {
+    sourceText.focus();
+    sourceText.placeholder = t("missingSource");
+    return null;
+  }
+
+  const articles = loadArticles();
+  const now = new Date().toISOString();
+  const sourceUrl = currentSourceVisit?.url || "";
+  const sourceKey = currentSourceVisit ? sourceVisitKey(currentSourceVisit) : "";
+  const existingIndex = articles.findIndex((article) => (
+    article.id === currentArticleId ||
+    (sourceKey && article.sourceVisitKey === sourceKey) ||
+    (sourceUrl && article.sourceUrl === sourceUrl)
+  ));
+  const existing = existingIndex >= 0 ? articles[existingIndex] : null;
+  const content = text.trim();
+  const article = {
+    ...(existing || {}),
+    id: existing?.id || currentArticleId || createId("article"),
+    title: inferArticleTitle(content || currentSourceVisit?.title || ""),
+    content,
+    sourceUrl,
+    sourceDomain: currentSourceVisit?.domain || "",
+    sourceCategory: currentSourceVisit?.category || "",
+    sourceBrowser: currentSourceVisit?.browser || browserSelect.value || "",
+    sourceVisitedAt: currentSourceVisit?.visitedAt || "",
+    sourceVisitKey: sourceKey,
+    extractionMethod: currentSourceVisit ? (content ? "fetchedPage" : "needsContent") : "manualPaste",
+    status: content ? (existing?.attempts?.length ? "trained" : "added") : "needsContent",
+    createdAt: existing?.createdAt || now,
+    updatedAt: now,
+    lastTrainedAt: existing?.lastTrainedAt || "",
+    attempts: existing?.attempts || [],
+  };
+
+  if (existingIndex >= 0) {
+    articles[existingIndex] = article;
+  } else {
+    articles.unshift(article);
+  }
+
+  currentArticleId = article.id;
+  articleTitleInput.value = article.title;
+  saveArticles(articles);
+  renderArticleLibrary();
+  render();
+
+  if (!options.silent) {
+    clipboardStatus.textContent = t("articleSaved");
+  }
+  return article;
+}
+
+function saveVisitToLibrary(visit) {
+  const previousArticleId = currentArticleId;
+  const previousSourceVisit = currentSourceVisit;
+  const previousTitle = articleTitleInput.value;
+  const previousSource = sourceText.value;
+
+  currentArticleId = findArticleForVisit(visit)?.id || null;
+  currentSourceVisit = visit;
+  articleTitleInput.value = visit.title || visit.domain || "";
+  sourceText.value = visit.content?.trim() || "";
+  const article = saveCurrentArticle({ silent: true });
+
+  currentArticleId = previousArticleId;
+  currentSourceVisit = previousSourceVisit;
+  articleTitleInput.value = previousTitle;
+  sourceText.value = previousSource;
+
+  clipboardStatus.textContent = t("articleSaved");
+  renderArticleLibrary();
+  render();
+  return article;
+}
+
+function loadArticleIntoTrainer(article) {
+  currentArticleId = article.id;
+  currentSourceVisit = article.sourceUrl ? {
+    id: article.sourceVisitKey || article.id,
+    url: article.sourceUrl,
+    title: article.title,
+    domain: article.sourceDomain,
+    category: article.sourceCategory,
+    browser: article.sourceBrowser,
+    visitedAt: article.sourceVisitedAt,
+    content: article.content,
+    sourceVisitKey: article.sourceVisitKey,
+  } : null;
+  articleTitleInput.value = article.title;
+  sourceText.value = article.content?.trim()
+    ? article.content
+    : `${article.title}\n\n${article.sourceUrl || t("noSourceUrl")}\n\n${t("noFetchedContent")}`;
+  resetMemoryRound(true);
+  clipboardStatus.textContent = t("articleLoaded");
+  sourceText.focus();
+}
+
+function renderArticleLibrary() {
+  const query = articleSearchInput.value.trim().toLowerCase();
+  const articles = loadArticles()
+    .filter((article) => {
+      const haystack = `${article.title} ${article.sourceUrl} ${article.sourceDomain} ${(article.tags || []).join(" ")}`.toLowerCase();
+      return !query || haystack.includes(query);
+    })
+    .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+
+  articleLibraryList.innerHTML = "";
+  if (!articles.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = t("noArticles");
+    articleLibraryList.append(empty);
+    return;
+  }
+
+  articles.forEach((article) => {
+    const card = document.createElement("article");
+    const header = document.createElement("div");
+    const title = document.createElement("strong");
+    const status = document.createElement("span");
+    const meta = document.createElement("p");
+    const snippet = document.createElement("p");
+    const actions = document.createElement("div");
+    const loadButton = document.createElement("button");
+
+    card.className = "article-library-item";
+    header.className = "article-library-header";
+    status.className = `status-pill status-${articleStatus(article)}`;
+    actions.className = "article-actions";
+    loadButton.className = "secondary-button compact";
+    loadButton.type = "button";
+    loadButton.textContent = t("loadArticle");
+    loadButton.addEventListener("click", () => loadArticleIntoTrainer(article));
+
+    title.textContent = article.title;
+    status.textContent = statusLabel(articleStatus(article));
+    meta.textContent = `${article.sourceDomain || t("noSourceUrl")} · ${(article.attempts || []).length} ${t("attemptsUnit")} · ${articleDateLabel(article.updatedAt || article.createdAt)}`;
+    snippet.textContent = article.content?.trim()
+      ? sessionSummary(article.content)
+      : `${t("needsContent")} · ${article.sourceUrl || t("noSourceUrl")}`;
+
+    header.append(title, status);
+    actions.append(loadButton);
+    card.append(header, meta, snippet, actions);
+    articleLibraryList.append(card);
+  });
+}
+
 function renderMemoryHistory() {
   const history = loadMemoryHistory();
   historyList.innerHTML = "";
@@ -522,16 +817,18 @@ function renderMemoryHistory() {
     const missing = document.createElement("p");
     article.className = "history-item";
     title.textContent = `${item.score} / 5 · ${item.date}`;
-    summary.textContent = item.summary;
+    summary.textContent = item.articleTitle ? `${item.articleTitle} · ${item.summary}` : item.summary;
     missing.textContent = item.missing || t("noMissingPoints");
     article.append(title, summary, missing);
     historyList.append(article);
   });
 }
-
 function saveSession() {
-  const history = loadMemoryHistory();
-  history.unshift({
+  const source = getCleanSource();
+  const linkedArticle = saveCurrentArticle({ silent: true });
+  const attempt = {
+    id: createId("attempt"),
+    createdAt: new Date().toISOString(),
     date: new Date().toLocaleString(localeName(), {
       month: "2-digit",
       day: "2-digit",
@@ -539,11 +836,35 @@ function saveSession() {
       minute: "2-digit",
     }),
     score: scoreSlider.value,
-    summary: sessionSummary(getCleanSource()),
+    recall: recallText.value.trim(),
+    summary: sessionSummary(source),
     missing: missingText.value.trim(),
-  });
+    articleId: linkedArticle?.id || "",
+    articleTitle: linkedArticle?.title || inferArticleTitle(source),
+  };
+
+  const history = loadMemoryHistory();
+  history.unshift(attempt);
   saveMemoryHistory(history.slice(0, 12));
+
+  if (linkedArticle) {
+    const articles = loadArticles();
+    const index = articles.findIndex((article) => article.id === linkedArticle.id);
+    if (index >= 0) {
+      articles[index] = {
+        ...articles[index],
+        status: "trained",
+        lastTrainedAt: attempt.createdAt,
+        updatedAt: attempt.createdAt,
+        attempts: [attempt, ...(articles[index].attempts || [])],
+      };
+      saveArticles(articles);
+    }
+  }
+
   renderMemoryHistory();
+  renderArticleLibrary();
+  render();
   saveSessionButton.textContent = t("saved");
   setTimeout(() => {
     saveSessionButton.textContent = t("saveSession");
@@ -600,7 +921,7 @@ function sampleVisits() {
   }));
 }
 
-function parseVisit(raw, index) {
+function parseVisit(raw, index, meta = {}) {
   const visitedAt = raw.visitedAt || raw.visit_time_iso || raw.visitTime || raw.time;
   const url = raw.url || "";
   const domain = raw.domain || safeDomain(url) || "未知網站";
@@ -614,6 +935,8 @@ function parseVisit(raw, index) {
     category: raw.category || classifyVisit(domain, title, url),
     durationSeconds: Number(raw.durationSeconds ?? raw.duration_seconds ?? raw.duration ?? 0),
     content: raw.content || raw.text || raw.pageText || "",
+    browser: raw.browser || meta.browser || "",
+    sourceVisitKey: raw.sourceVisitKey || `${raw.browser || meta.browser || "unknown"}|${visitedAt || ""}|${url}`,
   };
 }
 
@@ -865,7 +1188,7 @@ function renderTable(items) {
   if (!items.length) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 6;
+    cell.colSpan = 7;
     cell.className = "empty-cell";
     cell.textContent = t("noVisitLog");
     row.append(cell);
@@ -906,13 +1229,28 @@ function renderTable(items) {
     urlCell.append(urlLink);
     row.append(urlCell);
 
+    const statusCell = document.createElement("td");
+    const status = visitLearningStatus(visit);
+    const statusPill = document.createElement("span");
+    statusPill.className = `status-pill status-${status}`;
+    statusPill.textContent = statusLabel(status);
+    statusCell.append(statusPill);
+    row.append(statusCell);
+
     const actionCell = document.createElement("td");
+    const addButton = document.createElement("button");
     const trainButton = document.createElement("button");
+    actionCell.className = "visit-actions";
+    addButton.className = "secondary-button compact";
+    addButton.type = "button";
+    addButton.textContent = status === "notReviewed" || status === "needsContent" ? t("addToLibrary") : t("addedToLibrary");
+    addButton.disabled = status !== "notReviewed" && status !== "needsContent";
+    addButton.addEventListener("click", () => saveVisitToLibrary(visit));
     trainButton.className = "secondary-button compact";
     trainButton.type = "button";
     trainButton.textContent = t("sendToTraining");
     trainButton.addEventListener("click", () => sendVisitToMemoryTraining(visit));
-    actionCell.append(trainButton);
+    actionCell.append(addButton, trainButton);
     row.append(actionCell);
 
     visitRows.append(row);
@@ -920,6 +1258,9 @@ function renderTable(items) {
 }
 
 function sendVisitToMemoryTraining(visit) {
+  currentArticleId = findArticleForVisit(visit)?.id || null;
+  currentSourceVisit = visit;
+  articleTitleInput.value = visit.title || visit.domain || "";
   const body = visit.content?.trim();
   sourceText.value = body
     ? body
@@ -1029,7 +1370,7 @@ async function updateImportedJson() {
     if (!response.ok) {
       throw new Error(payload.error || "更新失敗");
     }
-    loadVisits(payload.visits || []);
+    loadVisits(payload.visits || [], payload);
     showJsonPrompt(payload, payload.output || importedJsonMeta?.fileName || "browser_history_export.json");
     jsonUpdateStatus.textContent = t("updatedJson", { count: payload.visits?.length || 0 });
   } catch (error) {
@@ -1046,7 +1387,7 @@ historyFile.addEventListener("change", async (event) => {
     return;
   }
   const json = JSON.parse(await file.text());
-  loadVisits(Array.isArray(json) ? json : json.visits || []);
+  loadVisits(Array.isArray(json) ? json : json.visits || [], Array.isArray(json) ? {} : json);
   if (!Array.isArray(json)) {
     showJsonPrompt(json, file.name);
   }
@@ -1060,7 +1401,12 @@ languageToggleButton.addEventListener("click", () => {
   applyLanguage();
 });
 pasteClipboardButton.addEventListener("click", pasteFromClipboard);
+saveArticleButton.addEventListener("click", () => saveCurrentArticle());
+articleSearchInput.addEventListener("input", renderArticleLibrary);
 sampleArticleButton.addEventListener("click", () => {
+  currentArticleId = null;
+  currentSourceVisit = null;
+  articleTitleInput.value = currentLanguage === "zh" ? "記憶如何運作" : "How Memory Works";
   sourceText.value = sampleArticle;
   resetMemoryRound(true);
 });
@@ -1084,7 +1430,7 @@ dismissJsonPromptButton.addEventListener("click", () => {
   jsonStatusPanel.classList.add("hidden");
 });
 
-loadSampleButton.addEventListener("click", () => loadVisits(sampleVisits()));
+loadSampleButton.addEventListener("click", () => loadVisits(sampleVisits(), { browser: "sample" }));
 [startDate, endDate, minSeconds, searchText].forEach((input) => {
   input.addEventListener("input", () => {
     activeDrilldown = null;

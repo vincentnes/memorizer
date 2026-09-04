@@ -11,6 +11,7 @@ It helps with a common problem: you read something and understand it, but cannot
 - Browsing time analysis: import exported Chrome, Edge, or Firefox history JSON, filter by time, classify content, and view charts.
 - Chart drilldown: click a bar in the category or hourly chart to show matching visit logs.
 - Visit-to-training: send a visit's fetched page content, title, and link into memory training.
+- Visit-to-library: add useful browsing visits to the article library and track their learning status.
 - Bilingual UI: switch between Traditional Chinese and English.
 - Local update API: when served from `tools/local_server.py`, the app can regenerate browsing data JSON from your machine.
 
