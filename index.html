@@ -10,13 +10,12 @@
     <main class="app-shell">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Attention & Memory</p>
-          <h1>Memorizer</h1>
+          <img class="brand-logo" src="assets/memorizer-logo-horizontal.svg" alt="Memorizer" />
         </div>
         <div class="top-actions">
           <div class="mode-switch" aria-label="功能切換">
-            <button id="memoryModeButton" class="mode-button active" type="button" data-i18n="memoryMode">記憶訓練</button>
             <button id="chromeModeButton" class="mode-button" type="button" data-i18n="chromeMode">瀏覽時間</button>
+            <button id="memoryModeButton" class="mode-button active" type="button" data-i18n="memoryMode">記憶訓練</button>
           </div>
           <button id="loadSampleButton" class="secondary-button" type="button" data-i18n="loadSample">載入範例</button>
           <label class="file-button">
@@ -24,9 +23,22 @@
             <input id="historyFile" type="file" accept=".json,application/json" />
           </label>
           <button id="languageToggleButton" class="secondary-button language-button" type="button">English</button>
+          <button id="settingsButton" class="secondary-button settings-icon" type="button" aria-label="設定" title="設定" aria-haspopup="dialog" aria-controls="settingsDialog">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m9 3-1 3-3 1-2 3 2 2-1 3 3 2 2-1 3 2 3-2 2 1 3-2-1-3 2-2-2-3-3-1-1-3Z"/><circle cx="12" cy="11" r="3"/></svg>
+          </button>
         </div>
       </header>
 
+      <section class="today-panel" aria-labelledby="todayTitle">
+        <div>
+          <h2 id="todayTitle" data-i18n="today">讓記憶留下印象</h2>
+          <p data-i18n="todayCaption">收集記憶，串連知識，喚回靈感。</p>
+        </div>
+        <div id="todayMemoryActions" class="button-row">
+          <button id="captureMemoryButton" type="button" class="primary-button" data-i18n="capture">收集一段記憶</button>
+          <button id="todayReviewButton" type="button" class="secondary-button" data-i18n="reviewToday">今日複習</button>
+        </div>
+      </section>
       <section id="memoryTrainerView" class="memory-trainer">
         <section class="trainer">
           <aside class="source-panel" aria-labelledby="sourceTitle">
@@ -36,35 +48,41 @@
                 <h2 id="sourceTitle" data-i18n="sourceTitle">放入一段文字</h2>
               </div>
               <div class="inline-actions">
-                
+
                 <button class="secondary-button compact" id="saveArticleButton" type="button" data-i18n="saveArticle">儲存文章</button>
                 <button class="secondary-button compact" id="pasteClipboardButton" type="button" data-i18n="pasteClipboard">載入剪貼簿</button>
+                <label class="secondary-button compact file-button"><span data-i18n="importText">匯入 TXT／Markdown</span><input id="textFileInput" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown" /></label>
+                <button id="splitArticleButton" class="secondary-button compact" type="button" data-i18n="splitText">分段練習</button>
                 <button class="secondary-button compact" id="sampleArticleButton" type="button" data-i18n="sampleArticle">範例文章</button>
               </div>
             </div>
 
+            <div class="form-field">
             <label for="articleTitleInput" data-i18n="articleTitle">文章標題</label>
             <input id="articleTitleInput" type="text" placeholder="可留空，系統會用第一行當標題。" data-i18n-placeholder="articleTitlePlaceholder" />
+            </div>
 
+            <div class="form-field">
+            <label for="articleTagsInput" data-i18n="articleTags">標籤</label>
+            <input id="articleTagsInput" type="text" placeholder="用逗號分隔，例如 AI, 閱讀, 工作" data-i18n-placeholder="articleTagsPlaceholder" />
+            </div>
+
+            <div class="form-field">
+            <label for="impressionInput" data-i18n="impression">我的印象</label>
+            <textarea id="impressionInput" rows="3" data-i18n-placeholder="impressionPlaceholder" placeholder="為什麼想保留？它讓你想到什麼？"></textarea>
+            </div>
+            <div class="form-field">
+              <label for="expectedPointsInput" data-i18n="expectedPoints">預期重點（每行一點）</label>
+              <textarea id="expectedPointsInput" rows="3"></textarea>
+            </div>
+            <p id="sourceContext" class="field-note" aria-live="polite"></p>
+            <div id="contentVersions"></div>
+            <div class="form-field">
             <label for="sourceText" data-i18n="article">文章</label>
             <textarea id="sourceText" class="source-text" spellcheck="false" placeholder="貼上你剛讀完、想訓練複述的段落。" data-i18n-placeholder="sourcePlaceholder"></textarea>
+            </div>
             <p id="clipboardStatus" class="field-note" aria-live="polite"></p>
 
-            <div class="memory-settings">
-              <label>
-                <span data-i18n="readSeconds">閱讀秒數</span>
-                <input id="readSeconds" type="number" min="20" max="600" step="10" value="90" />
-              </label>
-              <label>
-                <span data-i18n="targetPoints">目標重點</span>
-                <input id="targetPoints" type="number" min="2" max="8" step="1" value="4" />
-              </label>
-            </div>
-
-            <div class="button-row">
-              <button id="startReadingButton" class="primary-button" type="button" data-i18n="startReading">開始閱讀</button>
-              <button id="resetMemoryButton" class="secondary-button" type="button" data-i18n="reset">重置</button>
-            </div>
           </aside>
 
           <section class="practice-panel" aria-labelledby="practiceTitle">
@@ -82,6 +100,27 @@
               </div>
             </div>
 
+            <div class="practice-controls">
+            <label><span data-i18n="recallMode">回想模式</span>
+              <select id="recallMode"><option value="free" data-i18n="freeRecall">自由複述</option><option value="threePoints" data-i18n="threePoints">三個重點</option></select>
+            </label>
+            <div class="memory-settings">
+              <label>
+                <span data-i18n="readSeconds">閱讀秒數</span>
+                <input id="readSeconds" type="number" min="20" max="600" step="10" value="90" />
+              </label>
+              <label>
+                <span data-i18n="targetPoints">目標重點</span>
+                <input id="targetPoints" type="number" min="2" max="8" step="1" value="4" />
+              </label>
+            </div>
+
+            <div class="button-row">
+              <button id="startReadingButton" class="primary-button" type="button" data-i18n="startReading">開始閱讀</button>
+              <button id="resetMemoryButton" class="secondary-button" type="button" data-i18n="reset">重置</button>
+            </div>
+            </div>
+
             <div id="readingView" class="reading-view">
               <div class="article-card">
                 <p id="readingText">按下「開始閱讀」後，文章會出現在這裡。時間到後原文會自動收起。</p>
@@ -92,6 +131,11 @@
             <div id="recallView" class="recall-view hidden">
               <label for="recallText" data-i18n="recallLabel">不要看原文，先寫下你記得的主要內容</label>
               <textarea id="recallText" class="recall-text" placeholder="用自己的話列出主要內容。卡住時先寫零碎片段也可以。" data-i18n-placeholder="recallPlaceholder"></textarea>
+              <div id="threeRecall" class="hidden">
+                <label for="recallPoint1"><span data-i18n="point">重點</span> 1</label><textarea id="recallPoint1" rows="3"></textarea>
+                <label for="recallPoint2"><span data-i18n="point">重點</span> 2</label><textarea id="recallPoint2" rows="3"></textarea>
+                <label for="recallPoint3"><span data-i18n="point">重點</span> 3</label><textarea id="recallPoint3" rows="3"></textarea>
+              </div>
               <div class="button-row">
                 <button id="hintButton" class="secondary-button" type="button" data-i18n="lowHint">給我低提示</button>
                 <button id="structureButton" class="secondary-button" type="button" data-i18n="structureHint">給我結構提示</button>
@@ -112,12 +156,19 @@
                 </section>
               </div>
 
+              <section id="expectedComparison" class="hidden"><h3 data-i18n="expectedPoints">預期重點（每行一點）</h3><div id="expectedPreview" class="review-box"></div></section>
               <div class="score-panel">
                 <label for="scoreSlider" data-i18n="scoreQuestion">這次抓住了幾成重點？</label>
                 <input id="scoreSlider" type="range" min="0" max="5" value="3" />
                 <span id="scoreLabel">3 / 5</span>
               </div>
 
+
+              <div class="score-panel">
+                <label for="confidenceSlider" data-i18n="confidenceQuestion">你對這次回想有多有把握？</label>
+                <input id="confidenceSlider" type="range" min="0" max="5" value="3" />
+                <span id="confidenceLabel">3 / 5</span>
+              </div>
               <label for="missingText" data-i18n="missingLabel">補上漏掉的重點</label>
               <textarea id="missingText" class="missing-text" placeholder="寫下剛剛沒有想起來、但下次要抓住的重點。" data-i18n-placeholder="missingPlaceholder"></textarea>
 
@@ -130,16 +181,46 @@
         </section>
 
 
+
+        <section class="history-panel" aria-labelledby="dueReviewTitle">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Review Queue</p>
+              <h2 id="dueReviewTitle" data-i18n="dueTodayTitle">今日複習</h2>
+            </div>
+            <span id="dueReviewCount" class="caption">0</span>
+          </div>
+          <p class="drilldown-status" data-i18n="dueTodayCaption">到期的文章會出現在這裡，直接載入後再做一次主動回想。</p>
+          <div id="dueReviewList" class="article-library-list"></div>
+        </section>
         <section class="history-panel" aria-labelledby="articleLibraryTitle">
           <div class="panel-heading">
             <div>
               <p class="eyebrow">Library</p>
               <h2 id="articleLibraryTitle" data-i18n="articleLibraryTitle">文章庫</h2>
             </div>
-            <label class="compact-search">
-              <span data-i18n="filterArticles">篩選文章</span>
-              <input id="articleSearchInput" type="search" placeholder="標題、來源或標籤" data-i18n-placeholder="articleSearchPlaceholder" />
-            </label>
+                        <div class="library-tools">
+              <label class="compact-search">
+                <span data-i18n="filterArticles">篩選文章</span>
+                <input id="articleSearchInput" type="search" placeholder="標題、來源或標籤" data-i18n-placeholder="articleSearchPlaceholder" />
+              </label>
+              <label class="compact-search">
+                <span data-i18n="statusFilter">狀態</span>
+                <select id="articleStatusFilter">
+                  <option value="all" data-i18n="allStatuses">全部</option>
+                  <option value="newReview" data-i18n="newReview">新文章</option>
+                  <option value="learning" data-i18n="learning">學習中</option>
+                  <option value="dueForReview" data-i18n="dueForReview">待複習</option>
+                  <option value="mastered" data-i18n="mastered">已掌握</option>
+                  <option value="needsContent" data-i18n="needsContent">需補內容</option>
+                </select>
+              </label>
+              <button id="exportTrainingDataButton" class="secondary-button compact" type="button" data-i18n="exportTrainingData">匯出訓練資料</button>
+              <label class="secondary-button compact file-button inline-file-button">
+                <span data-i18n="importTrainingData">匯入訓練資料</span>
+                <input id="trainingDataFile" type="file" accept=".json,application/json" />
+              </label>
+            </div>
           </div>
           <div id="articleLibraryList" class="article-library-list"></div>
         </section>
@@ -189,14 +270,14 @@
         </div>
       </section>
 
-      <section id="jsonStatusPanel" class="json-status-panel hidden" aria-live="polite">
+      <section id="jsonStatusPanel" class="json-status-panel" aria-live="polite">
         <div>
-          <p class="eyebrow">Imported JSON</p>
+          <p class="eyebrow" data-i18n="browsingDataSource">Browsing Data</p>
           <h2 id="jsonGeneratedAt">尚未匯入瀏覽資料</h2>
-          <p id="jsonUpdateStatus">匯入後可在這裡更新資料。</p>
+          <p id="jsonUpdateStatus">可直接從上方選定瀏覽器與時間範圍產生瀏覽資料，不必先匯入 JSON。</p>
         </div>
         <div class="json-actions">
-          <button id="updateJsonButton" class="primary-button" type="button" data-i18n="updateJson">更新 JSON</button>
+          <button id="updateJsonButton" class="primary-button" type="button">產生瀏覽資料</button>
           <button id="dismissJsonPromptButton" class="secondary-button" type="button" data-i18n="later">稍後</button>
         </div>
       </section>
@@ -306,7 +387,46 @@
       </section>
     </main>
 
+    <dialog id="settingsDialog" aria-labelledby="settingsTitle">
+      <form id="settingsForm">
+        <header class="settings-heading">
+          <h2 id="settingsTitle" data-settings-label="title">設定</h2>
+          <button id="settingsClose" class="secondary-button settings-icon" type="button" aria-label="關閉設定">×</button>
+        </header>
+        <fieldset>
+          <legend data-settings-label="general">一般</legend>
+          <div class="settings-grid">
+            <label class="form-field"><span data-settings-label="language">介面語言</span><select name="language"><option value="zh">繁體中文</option><option value="en">English</option></select></label>
+            <label class="form-field"><span data-settings-label="startPage">啟動頁面</span><select name="startPage"><option value="memory" data-settings-label="memory">記憶訓練</option><option value="chrome" data-settings-label="browsing">瀏覽時間</option></select></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend data-settings-label="practice">閱讀預設值</legend>
+          <div class="settings-grid">
+            <label class="form-field"><span data-settings-label="seconds">閱讀秒數</span><input name="seconds" type="number" min="20" max="600" step="10" required /></label>
+            <label class="form-field"><span data-settings-label="points">目標重點</span><input name="points" type="number" min="2" max="8" step="1" required /></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend data-settings-label="storage">檔案儲存</legend>
+          <label class="form-field"><span data-settings-label="folder">預設匯出資料夾</span><input id="settingsFolder" type="text" readonly /></label>
+          <div class="button-row">
+            <button id="chooseSettingsFolder" class="secondary-button" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 7V4h7l3 3h8v13H3Z"/></svg><span data-settings-label="choose">選擇資料夾</span></button>
+            <button id="resetSettingsFolder" class="secondary-button" type="button" data-settings-label="resetFolder">使用瀏覽器下載</button>
+          </div>
+          <p class="settings-help" data-settings-label="help"></p>
+          <p id="settingsFolderHint" class="settings-help"></p>
+        </fieldset>
+        <p id="settingsStatus" role="status"></p>
+        <footer class="settings-footer">
+          <button id="settingsCancel" type="button" class="secondary-button" data-settings-label="cancel">取消</button>
+          <button id="saveSettingsButton" type="submit" class="primary-button" data-settings-label="save">儲存設定</button>
+        </footer>
+      </form>
+    </dialog>
+    <script src="memory-content.js"></script>
     <script src="app.js"></script>
+    <script src="settings.js"></script>
   </body>
 </html>
 

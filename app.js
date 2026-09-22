@@ -30,6 +30,9 @@ const memoryTrainerView = document.querySelector("#memoryTrainerView");
 const chromeAnalyzerView = document.querySelector("#chromeAnalyzerView");
 const sourceText = document.querySelector("#sourceText");
 const articleTitleInput = document.querySelector("#articleTitleInput");
+const impressionInput = document.querySelector("#impressionInput");
+const sourceContext = document.querySelector("#sourceContext");
+const articleTagsInput = document.querySelector("#articleTagsInput");
 const readSeconds = document.querySelector("#readSeconds");
 const targetPoints = document.querySelector("#targetPoints");
 const pasteClipboardButton = document.querySelector("#pasteClipboardButton");
@@ -40,6 +43,9 @@ const startReadingButton = document.querySelector("#startReadingButton");
 const resetMemoryButton = document.querySelector("#resetMemoryButton");
 const hideNowButton = document.querySelector("#hideNowButton");
 const readingText = document.querySelector("#readingText");
+const recallMode = document.querySelector("#recallMode");
+const expectedPointsInput = document.querySelector("#expectedPointsInput");
+let activeRound = null;
 const recallText = document.querySelector("#recallText");
 const hintButton = document.querySelector("#hintButton");
 const structureButton = document.querySelector("#structureButton");
@@ -47,13 +53,20 @@ const finishRecallButton = document.querySelector("#finishRecallButton");
 const hintBox = document.querySelector("#hintBox");
 const scoreSlider = document.querySelector("#scoreSlider");
 const scoreLabel = document.querySelector("#scoreLabel");
+const confidenceSlider = document.querySelector("#confidenceSlider");
+const confidenceLabel = document.querySelector("#confidenceLabel");
 const missingText = document.querySelector("#missingText");
 const saveSessionButton = document.querySelector("#saveSessionButton");
 const newRoundButton = document.querySelector("#newRoundButton");
 const clearHistoryButton = document.querySelector("#clearHistoryButton");
 const historyList = document.querySelector("#historyList");
 const articleSearchInput = document.querySelector("#articleSearchInput");
+const articleStatusFilter = document.querySelector("#articleStatusFilter");
+const exportTrainingDataButton = document.querySelector("#exportTrainingDataButton");
+const trainingDataFile = document.querySelector("#trainingDataFile");
 const articleLibraryList = document.querySelector("#articleLibraryList");
+const dueReviewCount = document.querySelector("#dueReviewCount");
+const dueReviewList = document.querySelector("#dueReviewList");
 const timerLabel = document.querySelector("#timerLabel");
 const phaseLabel = document.querySelector("#phaseLabel");
 const memoryViews = {
@@ -106,6 +119,32 @@ const sampleArticle = `人的記憶不是像硬碟一樣把資訊完整存進去
 
 const translations = {
   zh: {
+    trainingDataExportFailed: "匯出未完成：",
+    importText: "匯入 TXT／Markdown",
+    splitText: "分段練習",
+    sourceParent: "返回母文章",
+    versions: "內容版本",
+    qualityShort: "內容較短，請確認是否完整；短筆記仍可使用。",
+    qualityBlocked: "可能擷取到登入或驗證頁，請檢查並補上正文。",
+    fileType: "請選擇 TXT 或 Markdown 檔案。",
+    fileSize: "文字檔上限為 1 MB。",
+    fileEncoding: "檔案為空或不是有效 UTF-8 文字。",
+    sectionsCreated: "分段已存入文章庫；每段保留母文章及來源版本。",
+    oneSection: "文章不需分段（每段最多 1,200 字元）。",
+    parentMissing: "母文章已刪除；分段仍保留來源快照。",
+    sourceVersion: "來源版本",
+    originalSnapshot: "查看來源快照",
+    savedVersions: "已儲存版本（唯讀）",
+    qualityEmpty: "未取得正文，請貼上內容後儲存。",
+
+    impression: "我的印象",
+    impressionPlaceholder: "為什麼想保留？它讓你想到什麼？",
+    today: "讓記憶留下印象",
+    todayCaption: "收集記憶，串連知識，喚回靈感。",
+    capture: "收集一段記憶",
+    reviewToday: "今日複習",
+    repairContent: "尚無正文，請貼上內容後儲存。",
+
     memoryMode: "記憶訓練",
     chromeMode: "瀏覽時間",
     loadSample: "載入範例",
@@ -116,19 +155,39 @@ const translations = {
     saveArticle: "儲存文章",
     articleTitle: "文章標題",
     articleTitlePlaceholder: "可留空，系統會用第一行當標題。",
+    articleTags: "標籤",
+    articleTagsPlaceholder: "用逗號分隔，例如 AI, 閱讀, 工作",
     articleSaved: "文章已儲存到文章庫。",
     articleLoaded: "已載入文章。",
     articleLibraryTitle: "文章庫",
+    dueTodayTitle: "今日複習",
+    dueTodayCaption: "到期的文章會出現在這裡，直接載入後再做一次主動回想。",
+    noDueReviews: "今天沒有到期複習。",
+    reviewNow: "開始複習",
+    nextReview: "下次複習：{date}",
     filterArticles: "篩選文章",
+    statusFilter: "狀態",
+    allStatuses: "全部",
+    exportTrainingData: "匯出訓練資料",
+    importTrainingData: "匯入訓練資料",
+    trainingDataExported: "訓練資料已匯出。",
+    trainingDataImported: "已匯入：{count} 篇文章。",
+    trainingDataImportFailed: "匯入失敗：{message}",
     articleSearchPlaceholder: "標題、來源或標籤",
     noArticles: "還沒有文章。從文字框儲存，或在瀏覽明細中加入文章庫。",
     loadArticle: "載入",
+    editArticle: "編輯",
+    deleteArticle: "刪除",
+    deleteArticleConfirm: "確定要刪除這篇文章？訓練紀錄摘要會保留，但文章庫會移除。",
+    articleDeleted: "文章已刪除。",
     addToLibrary: "加入文章庫",
     addedToLibrary: "已加入",
     attemptsUnit: "次練習",
     sourceVisit: "來源瀏覽",
     noSourceUrl: "手動輸入",
     learningStatus: "狀態",
+    newReview: "新文章",
+    learning: "學習中",
     notReviewed: "未處理",
     notUseful: "不需記憶",
     needsContent: "需補內容",
@@ -136,6 +195,7 @@ const translations = {
     trained: "已訓練",
     dueForReview: "待複習",
     mastered: "已掌握",
+    reviewScheduled: "已排下次複習：{date}",
     article: "文章",
     sourcePlaceholder: "貼上你剛讀完、想訓練複述的段落。",
     readSeconds: "閱讀秒數",
@@ -152,6 +212,14 @@ const translations = {
     compare: "對照",
     readingIntro: "按下「開始閱讀」後，文章會出現在這裡。時間到後原文會自動收起。",
     recallNow: "現在開始回想",
+    recallMode: "回想模式",
+    threePoints: "三個重點",
+    freeRecall: "自由複述",
+    expectedPoints: "預期重點（每行一點）",
+    needThreePoints: "請先定義三個預期重點，每行一點。",
+    attemptHistory: "完整練習紀錄",
+    confidence: "信心",
+    point: "重點",
     recallLabel: "不要看原文，先寫下你記得的主要內容",
     recallPlaceholder: "用自己的話列出主要內容。卡住時先寫零碎片段也可以。",
     lowHint: "給我低提示",
@@ -160,6 +228,7 @@ const translations = {
     yourRecall: "你的複述",
     originalText: "原文",
     scoreQuestion: "這次抓住了幾成重點？",
+    confidenceQuestion: "你對這次回想有多有把握？",
     missingLabel: "補上漏掉的重點",
     missingPlaceholder: "寫下剛剛沒有想起來、但下次要抓住的重點。",
     saveSession: "儲存訓練紀錄",
@@ -174,6 +243,8 @@ const translations = {
     minSeconds: "最少停留秒數",
     search: "搜尋",
     searchPlaceholder: "網域、標題或分類",
+    browsingDataSource: "瀏覽資料",
+    generateData: "產生瀏覽資料",
     updateJson: "更新 JSON",
     updating: "更新中",
     later: "稍後",
@@ -199,13 +270,13 @@ const translations = {
     exportStepBasic: "它會複製本機瀏覽器歷史資料庫，只輸出網址、標題、時間、估計停留秒數和分類。",
     exportStepContent: "若要把可讀取的網頁正文也一起帶進來，可執行",
     exportStepRight: "如果正文在右邊主欄，使用",
-    exportStepServer: "若要讓「更新 JSON」按鈕自動執行 Python，請用",
+    exportStepServer: "若要讓「產生/更新瀏覽資料」按鈕自動執行 Python，請用",
     exportStepServerEnd: "啟動本機 app。",
     outputFile: "輸出檔",
     noData: "尚無資料",
     noCategoryData: "匯入資料後顯示",
     importedJsonEmpty: "尚未匯入瀏覽資料",
-    jsonIdle: "匯入後可在這裡更新資料。",
+    jsonIdle: "可直接從上方選定瀏覽器與時間範圍產生瀏覽資料，不必先匯入 JSON。",
     noMemoryHistory: "還沒有紀錄。完成一次校準後，這裡會留下你的分數與漏掉的重點。",
     noMissingPoints: "沒有補充漏掉的重點。",
     noDomainData: "尚無網站資料。",
@@ -229,6 +300,7 @@ const translations = {
     jsonGeneratedAt: "JSON 產生時間：{time}",
     jsonAskUpdate: "要重新讀取選定瀏覽器的歷史紀錄並更新這份 JSON 嗎？",
     fileModeBlocked: "目前是直接打開 HTML，瀏覽器不能執行本機 Python。請先在專案資料夾執行 python tools/local_server.py，再用 http://127.0.0.1:8765 開啟。",
+    generatingJson: "正在執行匯出器並產生瀏覽資料...",
     updatingJson: "正在執行匯出器並重新產生 JSON...",
     updatedJson: "已更新：{count} 筆瀏覽紀錄。",
     updateFailed: "更新失敗：{message}",
@@ -237,6 +309,32 @@ const translations = {
     noFetchedContent: "這筆瀏覽紀錄只有標題和連結，沒有網頁正文。重新匯出時加上 --fetch-content，若該頁允許讀取，這裡就會帶入可複述的正文。",
   },
   en: {
+    trainingDataExportFailed: "Export did not complete:",
+    importText: "Import TXT / Markdown",
+    splitText: "Split for practice",
+    sourceParent: "Open parent article",
+    versions: "Content versions",
+    qualityShort: "Short content: check completeness. Short notes are still usable.",
+    qualityBlocked: "This may be a login or verification page. Check and repair the source.",
+    fileType: "Choose a TXT or Markdown file.",
+    fileSize: "Text files must be at most 1 MB.",
+    fileEncoding: "The file is empty or is not valid UTF-8 text.",
+    sectionsCreated: "Sections saved with their parent article and source version.",
+    oneSection: "No split needed (up to 1,200 characters per section).",
+    parentMissing: "Parent deleted; the section retains its source snapshot.",
+    sourceVersion: "Source version",
+    originalSnapshot: "View source snapshot",
+    savedVersions: "Saved versions (read-only)",
+    qualityEmpty: "No source text. Paste the content and save.",
+
+    impression: "My impression",
+    impressionPlaceholder: "Why keep this? What does it bring to mind?",
+    today: "Make memories leave an impression",
+    todayCaption: "Capture memories. Connect knowledge. Recall inspiration.",
+    capture: "Capture a memory",
+    reviewToday: "Review today",
+    repairContent: "No source text yet. Paste the content and save.",
+
     memoryMode: "Memory Training",
     chromeMode: "Browsing Time",
     loadSample: "Load Sample",
@@ -247,19 +345,39 @@ const translations = {
     saveArticle: "Save Article",
     articleTitle: "Article Title",
     articleTitlePlaceholder: "Optional. The first line will be used if blank.",
+    articleTags: "Tags",
+    articleTagsPlaceholder: "Comma-separated, e.g. AI, reading, work",
     articleSaved: "Article saved to library.",
     articleLoaded: "Article loaded.",
     articleLibraryTitle: "Article Library",
+    dueTodayTitle: "Due Today",
+    dueTodayCaption: "Due articles appear here. Load one and practice active recall again.",
+    noDueReviews: "No reviews due today.",
+    reviewNow: "Review",
+    nextReview: "Next review: {date}",
     filterArticles: "Filter Articles",
+    statusFilter: "Status",
+    allStatuses: "All",
+    exportTrainingData: "Export Training Data",
+    importTrainingData: "Import Training Data",
+    trainingDataExported: "Training data exported.",
+    trainingDataImported: "Imported: {count} articles.",
+    trainingDataImportFailed: "Import failed: {message}",
     articleSearchPlaceholder: "Title, source, or tag",
     noArticles: "No articles yet. Save from the passage box or add one from Visit Details.",
     loadArticle: "Load",
+    editArticle: "Edit",
+    deleteArticle: "Delete",
+    deleteArticleConfirm: "Delete this article? Training history summaries remain, but the article library item will be removed.",
+    articleDeleted: "Article deleted.",
     addToLibrary: "Add to Library",
     addedToLibrary: "Added",
     attemptsUnit: "attempts",
     sourceVisit: "Source visit",
     noSourceUrl: "Manual entry",
     learningStatus: "Status",
+    newReview: "New",
+    learning: "Learning",
     notReviewed: "Not reviewed",
     notUseful: "Not useful",
     needsContent: "Needs content",
@@ -267,6 +385,7 @@ const translations = {
     trained: "Trained",
     dueForReview: "Due",
     mastered: "Mastered",
+    reviewScheduled: "Next review scheduled: {date}",
     article: "Passage",
     sourcePlaceholder: "Paste a passage you just read and want to practice recalling.",
     readSeconds: "Reading Seconds",
@@ -283,6 +402,14 @@ const translations = {
     compare: "Compare",
     readingIntro: "After you press Start Reading, the passage appears here. When time is up, it will be hidden.",
     recallNow: "Start Recall Now",
+    recallMode: "Recall mode",
+    threePoints: "Three key points",
+    freeRecall: "Free recall",
+    expectedPoints: "Expected points (one per line)",
+    needThreePoints: "Define exactly three expected points, one per line, before starting.",
+    attemptHistory: "Complete attempt history",
+    confidence: "Confidence",
+    point: "Point",
     recallLabel: "Do not look at the source. Write the main points you remember.",
     recallPlaceholder: "List the main points in your own words. Fragments are fine when you get stuck.",
     lowHint: "Low Hint",
@@ -291,6 +418,7 @@ const translations = {
     yourRecall: "Your Recall",
     originalText: "Original",
     scoreQuestion: "How much of the key content did you capture?",
+    confidenceQuestion: "How confident are you in this recall?",
     missingLabel: "Add missed points",
     missingPlaceholder: "Write the points you missed and want to catch next time.",
     saveSession: "Save Session",
@@ -305,6 +433,8 @@ const translations = {
     minSeconds: "Min Dwell Seconds",
     search: "Search",
     searchPlaceholder: "Domain, title, or category",
+    browsingDataSource: "Browsing Data",
+    generateData: "Generate Browsing Data",
     updateJson: "Update JSON",
     updating: "Updating",
     later: "Later",
@@ -330,13 +460,13 @@ const translations = {
     exportStepBasic: "It copies the local browser history database and exports URL, title, time, estimated dwell seconds, and category.",
     exportStepContent: "To include readable page text, run",
     exportStepRight: "If the article body is in the right content column, use",
-    exportStepServer: "To let the Update JSON button run Python automatically, start the local app with",
+    exportStepServer: "To let the Generate/Update Browsing Data button run Python automatically, start the local app with",
     exportStepServerEnd: "",
     outputFile: "Output file",
     noData: "No data",
     noCategoryData: "Import data to display",
     importedJsonEmpty: "No browsing data imported",
-    jsonIdle: "After import, you can update the data here.",
+    jsonIdle: "Generate browsing data directly from the selected browser and time range above. No JSON import is required first.",
     noMemoryHistory: "No history yet. After a review, your score and missed points appear here.",
     noMissingPoints: "No missed points added.",
     noDomainData: "No site data yet.",
@@ -360,6 +490,7 @@ const translations = {
     jsonGeneratedAt: "JSON generated at: {time}",
     jsonAskUpdate: "Read the selected browser history again and update this JSON file?",
     fileModeBlocked: "This page is opened directly as HTML, so the browser cannot run local Python. Run python tools/local_server.py in the project folder, then open http://127.0.0.1:8765.",
+    generatingJson: "Running the exporter and generating browsing data...",
     updatingJson: "Running the exporter and regenerating JSON...",
     updatedJson: "Updated: {count} visits.",
     updateFailed: "Update failed: {message}",
@@ -398,6 +529,7 @@ function localeName() {
 }
 
 function applyLanguage() {
+  window.MemorizerSettings?.refreshLabels();
   document.documentElement.lang = currentLanguage === "zh" ? "zh-Hant" : "en";
   document.querySelectorAll("[data-i18n]").forEach((node) => {
     node.textContent = t(node.dataset.i18n);
@@ -412,14 +544,19 @@ function applyLanguage() {
   if (!importedJsonMeta) {
     jsonGeneratedAt.textContent = t("importedJsonEmpty");
     jsonUpdateStatus.textContent = t("jsonIdle");
+    updateJsonButton.textContent = t("generateData");
+    dismissJsonPromptButton.classList.add("hidden");
   }
   renderMemoryHistory();
   renderArticleLibrary();
+  renderDueReviews();
+  updateMemoryModeDueCount();
   render();
 }
 
 function setAppMode(mode) {
   const isMemory = mode === "memory";
+  document.querySelector("#todayMemoryActions").hidden = !isMemory;
   memoryTrainerView.classList.toggle("hidden", !isMemory);
   chromeAnalyzerView.classList.toggle("hidden", isMemory);
   memoryModeButton.classList.toggle("active", isMemory);
@@ -429,6 +566,9 @@ function setAppMode(mode) {
 }
 
 function setMemoryView(nextView) {
+  document.querySelectorAll(".source-panel input, .source-panel textarea, .source-panel button").forEach(node => node.disabled = !!activeRound);
+  recallMode.disabled = !!activeRound;
+  startReadingButton.disabled = !!activeRound;
   Object.entries(memoryViews).forEach(([name, node]) => {
     node.classList.toggle("hidden", name !== nextView);
   });
@@ -457,6 +597,12 @@ function getCleanSource() {
 }
 
 function startReading() {
+  const expected = expectedPointsInput.value.split(/\n/).map(x => x.trim()).filter(Boolean);
+  if (recallMode.value === "threePoints" && expected.length !== 3) {
+    clipboardStatus.textContent = t("needThreePoints");
+    expectedPointsInput.focus();
+    return;
+  }
   const text = getCleanSource();
   if (!text) {
     sourceText.focus();
@@ -464,7 +610,9 @@ function startReading() {
     return;
   }
 
-  stopTimer();
+  resetMemoryRound(true);
+  const article = saveCurrentArticle({ silent: true });
+  activeRound = { mode: recallMode.value, expectedPoints: expected, articleId: article.id, submitted: false, saved: false };
   readingText.textContent = text;
   phaseLabel.textContent = t("reading");
   hideNowButton.disabled = false;
@@ -480,13 +628,20 @@ function startReading() {
 }
 
 function beginRecall() {
+  if (!activeRound) return;
+  document.body.classList.add("recalling");
+  const three = activeRound.mode === "threePoints";
+  document.querySelector("#threeRecall").classList.toggle("hidden", !three);
+  recallText.classList.toggle("hidden", three);
+  hintButton.disabled = three;
+  structureButton.disabled = three;
   stopTimer();
   phaseLabel.textContent = t("recall");
   timerLabel.textContent = t("writeItDown");
   readingText.textContent = t("hiddenSource");
   hintBox.textContent = "";
   setMemoryView("recall");
-  recallText.focus();
+  (three ? document.querySelector("#recallPoint1") : recallText).focus();
 }
 
 function sentenceCandidates(text) {
@@ -532,9 +687,16 @@ function showStructureHint() {
 }
 
 function finishRecall() {
+  if (!activeRound || activeRound.submitted) return;
+  activeRound.recallPoints = [1, 2, 3].map(i => document.querySelector("#recallPoint" + i).value.trim());
+  activeRound.recall = activeRound.mode === "threePoints" ? activeRound.recallPoints.map((p, i) => `${i + 1}. ${p}`).join("\n") : recallText.value.trim();
+  activeRound.submitted = true;
+  document.body.classList.remove("recalling");
+  document.querySelector("#expectedPreview").textContent = activeRound.mode === "threePoints" ? activeRound.expectedPoints.map((p, i) => `${i + 1}. ${p}`).join("\n") : "";
+  document.querySelector("#expectedComparison").classList.toggle("hidden", activeRound.mode !== "threePoints");
   phaseLabel.textContent = t("calibrate");
   timerLabel.textContent = t("compare");
-  document.querySelector("#recallPreview").textContent = recallText.value.trim() || t("emptyRecall");
+  document.querySelector("#recallPreview").textContent = activeRound.recall || t("emptyRecall");
   document.querySelector("#sourcePreview").textContent = getCleanSource();
   setMemoryView("review");
 }
@@ -568,6 +730,166 @@ function saveArticles(articles) {
   localStorage.setItem("memorizer.articles", JSON.stringify(articles));
 }
 
+function parseTags(value) {
+  return value
+    .split(/[,，]/)
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .filter((tag, index, tags) => tags.indexOf(tag) === index)
+    .slice(0, 12);
+}
+
+function tagsLabel(tags = []) {
+  return tags.length ? tags.join(" · ") : "";
+}
+
+function refreshLearningViews() {
+  renderMemoryHistory();
+  renderArticleLibrary();
+  renderDueReviews();
+  updateMemoryModeDueCount();
+  render();
+}
+
+function mergeRecords(existing, incoming) {
+  const records = new Map();
+  [...existing, ...incoming].forEach((item) => {
+    const key = item.id || JSON.stringify(item);
+    if (!records.has(key)) records.set(key, item);
+  });
+  return [...records.values()];
+}
+
+function mergeArticles(existingArticles, incomingArticles) {
+  const map = new Map(existingArticles.map((article) => [article.id, article]));
+  incomingArticles.forEach((article) => {
+    if (!article || typeof article !== "object" || Array.isArray(article) ||
+        typeof article.id !== "string" || !article.id ||
+        ["content", "impression", "title", "parentArticleId", "parentSnapshot", "sourceFileName"].some(key => article[key] != null && typeof article[key] !== "string") ||
+        (article.expectedPoints != null && (!Array.isArray(article.expectedPoints) || article.expectedPoints.some(p => typeof p !== "string"))) ||
+        (article.contentVersion != null && (!Number.isInteger(article.contentVersion) || article.contentVersion < 1)) ||
+        (article.revisions != null && (!Array.isArray(article.revisions) ||
+          article.revisions.some(item => !item || typeof item.content !== "string" || !Number.isInteger(item.version)))) ||
+        (article.tags != null && !Array.isArray(article.tags) && typeof article.tags !== "string") ||
+        (Array.isArray(article.tags) && article.tags.some(tag => typeof tag !== "string")) ||
+        (article.attempts != null && (!Array.isArray(article.attempts) ||
+          article.attempts.some(item => !item || typeof item !== "object" || Array.isArray(item))))) {
+      throw new Error("Invalid article data");
+    }
+    const previous = map.get(article.id);
+    const incomingIsNewer = !previous ||
+      Date.parse(article.updatedAt || article.createdAt || "") > Date.parse(previous.updatedAt || previous.createdAt || "");
+    const merged = incomingIsNewer ? { ...previous, ...article } : { ...article, ...previous };
+    const revisions = mergeRecords(previous?.revisions || [], article.revisions || []);
+    const displaced = incomingIsNewer ? previous : article;
+    if (displaced && displaced.content !== merged.content &&
+        !revisions.some(item => item.content === (displaced.content || ""))) {
+      revisions.push({
+        id: createId("revision"), version: displaced.contentVersion || 1,
+        content: displaced.content || "", savedAt: new Date().toISOString(),
+      });
+    }
+    map.set(article.id, {
+      ...merged,
+      impression: merged.impression || "",
+      tags: Array.isArray(merged.tags) ? merged.tags : parseTags(String(merged.tags || "")),
+      attempts: mergeRecords(previous?.attempts || [], article.attempts || []),
+      revisions,
+    });
+  });
+  return [...map.values()].sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
+}
+
+function parseTrainingBackup(payload) {
+  if (!payload || typeof payload !== "object" ||
+      (!Array.isArray(payload) && (
+        (payload.schemaVersion != null && ![1, 2].includes(payload.schemaVersion)) ||
+        (payload.app != null && payload.app !== "Memorizer") ||
+        !Array.isArray(payload.articles) ||
+        (payload.sessions != null && !Array.isArray(payload.sessions))))) {
+    throw new Error("Unsupported or invalid Memorizer backup");
+  }
+  const articles = Array.isArray(payload) ? payload : payload.articles;
+  const sessions = Array.isArray(payload) ? [] : payload.sessions || [];
+  if (sessions.some(item => !item || typeof item !== "object" || Array.isArray(item))) {
+    throw new Error("Invalid session data");
+  }
+  return { articles: mergeArticles([], articles), sessions };
+}
+
+async function exportTrainingData() {
+  const payload = {
+    schemaVersion: 2,
+    app: "Memorizer",
+    exportedAt: new Date().toISOString(),
+    articles: loadArticles(),
+    sessions: loadMemoryHistory(),
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const filename = "memorizer-training-" + new Date().toISOString().replace(/[:.]/g, "-") + "-" + Math.random().toString(36).slice(2, 8) + ".json";
+  try {
+    if (await window.MemorizerSettings?.saveBackup(blob, filename)) {
+      clipboardStatus.textContent = t("trainingDataExported");
+      return;
+    }
+  } catch (error) {
+    clipboardStatus.textContent = t("trainingDataExportFailed") + " " + error.message;
+    return;
+  }
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(link.href);
+  clipboardStatus.textContent = t("trainingDataExported");
+}
+
+async function importTrainingData(event) {
+  const [file] = event.target.files;
+  if (!file) {
+    return;
+  }
+  try {
+    const payload = JSON.parse(await file.text());
+    const { articles: incomingArticles, sessions: incomingSessions } = parseTrainingBackup(payload);
+    const mergedArticles = mergeArticles(loadArticles(), incomingArticles);
+    const mergedSessions = mergeRecords(loadMemoryHistory(), incomingSessions);
+    const oldArticles = localStorage.getItem("memorizer.articles");
+    const oldSessions = localStorage.getItem("memorizer.sessions");
+    try {
+      saveArticles(mergedArticles);
+      saveMemoryHistory(mergedSessions);
+    } catch (error) {
+      for (const [key, value] of [["memorizer.articles", oldArticles], ["memorizer.sessions", oldSessions]]) {
+        if (value === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, value);
+      }
+      throw error;
+    }
+    refreshLearningViews();
+    clipboardStatus.textContent = t("trainingDataImported", { count: incomingArticles.length });
+  } catch (error) {
+    clipboardStatus.textContent = t("trainingDataImportFailed", { message: error.message });
+  } finally {
+    trainingDataFile.value = "";
+  }
+}
+
+function deleteArticle(articleId) {
+  if (!window.confirm(t("deleteArticleConfirm"))) {
+    return;
+  }
+  const articles = loadArticles().filter((article) => article.id !== articleId);
+  saveArticles(articles);
+  if (currentArticleId === articleId) {
+    currentArticleId = null;
+    currentSourceVisit = null;
+  }
+  clipboardStatus.textContent = t("articleDeleted");
+  refreshLearningViews();
+}
 function createId(prefix) {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -604,21 +926,85 @@ function articleDateLabel(value) {
   });
 }
 
+function addDays(date, days) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function isReviewDue(article, now = new Date()) {
+  if (!article.nextReviewAt) {
+    return false;
+  }
+  const due = new Date(article.nextReviewAt);
+  return !Number.isNaN(due.getTime()) && due <= now;
+}
+
+function calculateReviewSchedule(scoreValue, confidenceValue, article = {}) {
+  const quality = Math.min(5, Math.max(0, Number(scoreValue) || 0));
+  const attempts = (article.attempts || []).filter(a =>
+    (a.contentVersion || 1) === (article.contentVersion || 1) &&
+    JSON.stringify(a.expectedPoints || []) === JSON.stringify(article.expectedPoints || [])
+  ).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  let strongStreak = quality >= 4 ? 1 : 0;
+  if (strongStreak) {
+    for (const attempt of attempts) {
+      if (Number(attempt.score) < 4 || !Number.isFinite(Number(attempt.score))) break;
+      strongStreak++;
+    }
+  }
+  const intervalDays = quality < 3 ? 1 : quality < 4 ? 3 : [3, 7, 14, 30][Math.min(strongStreak - 1, 3)];
+  return { quality, strongStreak, intervalDays, status: strongStreak >= 3 ? "mastered" : "learning",
+    nextReviewAt: addDays(new Date(), intervalDays).toISOString() };
+}
+
+function dueArticles() {
+  return loadArticles()
+    .filter((article) => article.content?.trim() && isReviewDue(article))
+    .sort((a, b) => new Date(a.nextReviewAt || 0) - new Date(b.nextReviewAt || 0));
+}
+
+function updateMemoryModeDueCount() {
+  const count = dueArticles().length;
+  memoryModeButton.textContent = count ? `${t("memoryMode")} (${count})` : t("memoryMode");
+}
+
+function reviewDateLabel(value) {
+  if (!value) {
+    return "";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return date.toLocaleDateString(localeName(), {
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
 function articleStatus(article) {
-  if (article.status) {
-    return article.status;
-  }
-  if (article.attempts?.length) {
-    return "trained";
-  }
   if (!article.content?.trim()) {
     return "needsContent";
   }
-  return "added";
+  if (article.nextReviewAt && isReviewDue(article)) {
+    return "dueForReview";
+  }
+  if (article.status === "mastered") {
+    return "mastered";
+  }
+  if (article.status === "learning") {
+    return "learning";
+  }
+  if (article.attempts?.length) {
+    return "learning";
+  }
+  return "newReview";
 }
 
 function statusLabel(status) {
   const keys = {
+    newReview: "newReview",
+    learning: "learning",
     notReviewed: "notReviewed",
     notUseful: "notUseful",
     needsContent: "needsContent",
@@ -632,7 +1018,7 @@ function statusLabel(status) {
 
 function findArticleForVisit(visit, articles = loadArticles()) {
   const key = sourceVisitKey(visit);
-  return articles.find((article) => (
+  return articles.find((article) => !article.parentArticleId && (
     (key && article.sourceVisitKey === key) ||
     (visit.url && article.sourceUrl === visit.url)
   ));
@@ -658,11 +1044,12 @@ function saveCurrentArticle(options = {}) {
   const now = new Date().toISOString();
   const sourceUrl = currentSourceVisit?.url || "";
   const sourceKey = currentSourceVisit ? sourceVisitKey(currentSourceVisit) : "";
-  const existingIndex = articles.findIndex((article) => (
-    article.id === currentArticleId ||
-    (sourceKey && article.sourceVisitKey === sourceKey) ||
-    (sourceUrl && article.sourceUrl === sourceUrl)
-  ));
+  const existingIndex = articles.findIndex((article) => currentArticleId
+    ? article.id === currentArticleId
+    : !article.parentArticleId && (
+      (sourceKey && article.sourceVisitKey === sourceKey) ||
+      (sourceUrl && article.sourceUrl === sourceUrl)
+    ));
   const existing = existingIndex >= 0 ? articles[existingIndex] : null;
   const content = text.trim();
   const article = {
@@ -670,20 +1057,29 @@ function saveCurrentArticle(options = {}) {
     id: existing?.id || currentArticleId || createId("article"),
     title: inferArticleTitle(content || currentSourceVisit?.title || ""),
     content,
+    ...MemoryContent.revisionFields(existing, content, now),
+    tags: parseTags(articleTagsInput.value),
+    impression: impressionInput.value.trim(),
+    expectedPoints: options.background ? [] : expectedPointsInput.value.split(/\n/).map(x => x.trim()).filter(Boolean),
+    recallMode: options.background ? "free" : recallMode.value,
     sourceUrl,
     sourceDomain: currentSourceVisit?.domain || "",
     sourceCategory: currentSourceVisit?.category || "",
     sourceBrowser: currentSourceVisit?.browser || browserSelect.value || "",
     sourceVisitedAt: currentSourceVisit?.visitedAt || "",
     sourceVisitKey: sourceKey,
-    extractionMethod: currentSourceVisit ? (content ? "fetchedPage" : "needsContent") : "manualPaste",
-    status: content ? (existing?.attempts?.length ? "trained" : "added") : "needsContent",
+    extractionMethod: existing?.content === content ? existing.extractionMethod : currentSourceVisit ? (content ? (content === currentSourceVisit.content ? "fetchedPage" : "manualPaste") : "needsContent") : "manualPaste",
+    status: content ? (existing?.attempts?.length ? existing.status || "learning" : "newReview") : "needsContent",
     createdAt: existing?.createdAt || now,
     updatedAt: now,
     lastTrainedAt: existing?.lastTrainedAt || "",
     attempts: existing?.attempts || [],
   };
 
+  if (existing && (existing.content !== content || JSON.stringify(existing.expectedPoints || []) !== JSON.stringify(article.expectedPoints))) {
+    article.status = content ? "newReview" : "needsContent";
+    article.nextReviewAt = null;
+  }
   if (existingIndex >= 0) {
     articles[existingIndex] = article;
   } else {
@@ -694,6 +1090,9 @@ function saveCurrentArticle(options = {}) {
   articleTitleInput.value = article.title;
   saveArticles(articles);
   renderArticleLibrary();
+  renderDueReviews();
+  updateMemoryModeDueCount();
+  if (!options.background) renderContentContext(article);
   render();
 
   if (!options.silent) {
@@ -703,25 +1102,34 @@ function saveCurrentArticle(options = {}) {
 }
 
 function saveVisitToLibrary(visit) {
-  const previousArticleId = currentArticleId;
-  const previousSourceVisit = currentSourceVisit;
-  const previousTitle = articleTitleInput.value;
-  const previousSource = sourceText.value;
-
-  currentArticleId = findArticleForVisit(visit)?.id || null;
-  currentSourceVisit = visit;
-  articleTitleInput.value = visit.title || visit.domain || "";
-  sourceText.value = visit.content?.trim() || "";
-  const article = saveCurrentArticle({ silent: true });
-
-  currentArticleId = previousArticleId;
-  currentSourceVisit = previousSourceVisit;
-  articleTitleInput.value = previousTitle;
-  sourceText.value = previousSource;
-
+  const existing = findArticleForVisit(visit);
+  if (existing) {
+    clipboardStatus.textContent = t("articleSaved");
+    return existing;
+  }
+  const previous = {
+    id: currentArticleId, visit: currentSourceVisit,
+    title: articleTitleInput.value, content: sourceText.value,
+    tags: articleTagsInput.value, impression: impressionInput.value,
+  };
+  let article;
+  try {
+    currentArticleId = null;
+    currentSourceVisit = visit;
+    articleTitleInput.value = visit.title || visit.domain || "";
+    sourceText.value = visit.content?.trim() || "";
+    articleTagsInput.value = "";
+    impressionInput.value = "";
+    article = saveCurrentArticle({ silent: true, background: true });
+  } finally {
+    currentArticleId = previous.id;
+    currentSourceVisit = previous.visit;
+    articleTitleInput.value = previous.title;
+    sourceText.value = previous.content;
+    articleTagsInput.value = previous.tags;
+    impressionInput.value = previous.impression;
+  }
   clipboardStatus.textContent = t("articleSaved");
-  renderArticleLibrary();
-  render();
   return article;
 }
 
@@ -738,21 +1146,27 @@ function loadArticleIntoTrainer(article) {
     content: article.content,
     sourceVisitKey: article.sourceVisitKey,
   } : null;
-  articleTitleInput.value = article.title;
-  sourceText.value = article.content?.trim()
-    ? article.content
-    : `${article.title}\n\n${article.sourceUrl || t("noSourceUrl")}\n\n${t("noFetchedContent")}`;
+  articleTitleInput.value = article.title || "";
+  articleTagsInput.value = (article.tags || []).join(", ");
+  impressionInput.value = article.impression || "";
+  expectedPointsInput.value = (article.expectedPoints || []).join("\n");
+  recallMode.value = article.recallMode || "free";
+  sourceText.value = article.content || "";
+  renderContentContext(article);
   resetMemoryRound(true);
-  clipboardStatus.textContent = t("articleLoaded");
+  setAppMode("memory");
+  clipboardStatus.textContent = t(article.content?.trim() ? "articleLoaded" : "repairContent");
   sourceText.focus();
 }
 
 function renderArticleLibrary() {
   const query = articleSearchInput.value.trim().toLowerCase();
+  const selectedStatus = articleStatusFilter.value;
   const articles = loadArticles()
     .filter((article) => {
-      const haystack = `${article.title} ${article.sourceUrl} ${article.sourceDomain} ${(article.tags || []).join(" ")}`.toLowerCase();
-      return !query || haystack.includes(query);
+      const status = articleStatus(article);
+      const haystack = (article.impression || "").toLowerCase() + " " + `${article.title} ${article.sourceUrl} ${article.sourceDomain} ${(article.tags || []).join(" ")}`.toLowerCase();
+      return (!query || haystack.includes(query)) && (selectedStatus === "all" || status === selectedStatus);
     })
     .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
 
@@ -771,33 +1185,132 @@ function renderArticleLibrary() {
     const title = document.createElement("strong");
     const status = document.createElement("span");
     const meta = document.createElement("p");
+    const tags = document.createElement("p");
     const snippet = document.createElement("p");
     const actions = document.createElement("div");
     const loadButton = document.createElement("button");
+    const updateButton = document.createElement("button");
+    const deleteButton = document.createElement("button");
 
     card.className = "article-library-item";
     header.className = "article-library-header";
     status.className = `status-pill status-${articleStatus(article)}`;
     actions.className = "article-actions";
     loadButton.className = "secondary-button compact";
+    updateButton.className = "secondary-button compact";
+    deleteButton.className = "secondary-button compact danger-button";
     loadButton.type = "button";
+    updateButton.type = "button";
+    deleteButton.type = "button";
     loadButton.textContent = t("loadArticle");
+    updateButton.textContent = t("editArticle");
+    deleteButton.textContent = t("deleteArticle");
     loadButton.addEventListener("click", () => loadArticleIntoTrainer(article));
+    updateButton.addEventListener("click", () => {
+      loadArticleIntoTrainer(article);
+      clipboardStatus.textContent = t("articleLoaded");
+    });
+    deleteButton.addEventListener("click", () => deleteArticle(article.id));
 
     title.textContent = article.title;
     status.textContent = statusLabel(articleStatus(article));
-    meta.textContent = `${article.sourceDomain || t("noSourceUrl")} · ${(article.attempts || []).length} ${t("attemptsUnit")} · ${articleDateLabel(article.updatedAt || article.createdAt)}`;
+    meta.textContent = `${article.sourceDomain || t("noSourceUrl")} · ${(article.attempts || []).length} ${t("attemptsUnit")} · ${articleDateLabel(article.updatedAt || article.createdAt)}${article.nextReviewAt ? ` · ${t("nextReview", { date: reviewDateLabel(article.nextReviewAt) })}` : ""}`;
+    tags.className = "tag-line";
+    tags.textContent = tagsLabel(article.tags || []);
     snippet.textContent = article.content?.trim()
       ? sessionSummary(article.content)
       : `${t("needsContent")} · ${article.sourceUrl || t("noSourceUrl")}`;
 
+    if (article.parentArticleId) {
+      meta.textContent += " · " + t("sourceVersion") + " " + article.parentVersion;
+    }
+    const quality = MemoryContent.quality(article.content || "");
+    if (quality === "short" || quality === "blocked") {
+      snippet.textContent += " · " + t(quality === "short" ? "qualityShort" : "qualityBlocked");
+    }
     header.append(title, status);
-    actions.append(loadButton);
-    card.append(header, meta, snippet, actions);
+    if (tags.textContent) {
+      card.append(header, meta, tags, snippet, actions);
+    } else {
+      card.append(header, meta, snippet, actions);
+    }
+    if (article.impression) {
+      const note = document.createElement("p");
+      note.className = "impression-note";
+      note.textContent = t("impression") + ": " + article.impression;
+      card.insertBefore(note, actions);
+    }
+    actions.append(loadButton, updateButton, deleteButton);
+    const history = document.createElement("details");
+    history.className = "attempt-history";
+    const heading = document.createElement("summary");
+    const attempts = mergeRecords(article.attempts || [], loadMemoryHistory().filter(a => a.articleId === article.id))
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    heading.textContent = t("attemptHistory") + ` (${attempts.length})`;
+    history.append(heading);
+    attempts.forEach(attempt => {
+      const entry = document.createElement("section");
+      entry.className = "history-item";
+      const meta = document.createElement("p");
+      meta.textContent = `${attempt.createdAt || attempt.date || ""} · ${t(attempt.mode === "threePoints" ? "threePoints" : "freeRecall")} · ${attempt.score ?? "—"} / 5 · ${t("confidence")}: ${attempt.confidence ?? "—"} · ${t("sourceVersion")} ${attempt.contentVersion || 1}`;
+      entry.append(meta);
+      [["yourRecall", attempt.recall], ["expectedPoints", (attempt.expectedPoints || []).join("\n")], ["missingLabel", attempt.missing], ["originalText", attempt.sourceSnapshot], ["nextReview", attempt.nextReviewAt]].forEach(([key, value]) => {
+        const label = document.createElement("strong");
+        label.textContent = key === "nextReview" ? t(key, {date: value || "—"}) : t(key);
+        const body = document.createElement("div");
+        body.className = "review-box";
+        body.textContent = value || "—";
+        entry.append(label, body);
+      });
+      history.append(entry);
+    });
+    card.append(history);
     articleLibraryList.append(card);
   });
 }
 
+
+function renderDueReviews() {
+  const articles = dueArticles();
+  dueReviewCount.textContent = t("recordCount", { count: articles.length });
+  dueReviewList.innerHTML = "";
+
+  if (!articles.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = t("noDueReviews");
+    dueReviewList.append(empty);
+    return;
+  }
+
+  articles.forEach((article) => {
+    const card = document.createElement("article");
+    const header = document.createElement("div");
+    const title = document.createElement("strong");
+    const status = document.createElement("span");
+    const meta = document.createElement("p");
+    const actions = document.createElement("div");
+    const reviewButton = document.createElement("button");
+
+    card.className = "article-library-item";
+    header.className = "article-library-header";
+    status.className = "status-pill status-dueForReview";
+    actions.className = "article-actions";
+    reviewButton.className = "primary-button compact";
+    reviewButton.type = "button";
+    reviewButton.textContent = t("reviewNow");
+    reviewButton.addEventListener("click", () => loadArticleIntoTrainer(article));
+
+    title.textContent = article.title;
+    status.textContent = statusLabel("dueForReview");
+    meta.textContent = `${article.sourceDomain || t("noSourceUrl")} · ${t("nextReview", { date: reviewDateLabel(article.nextReviewAt) })}`;
+
+    header.append(title, status);
+    actions.append(reviewButton);
+    card.append(header, meta, actions);
+    dueReviewList.append(card);
+  });
+}
 function renderMemoryHistory() {
   const history = loadMemoryHistory();
   historyList.innerHTML = "";
@@ -824,8 +1337,10 @@ function renderMemoryHistory() {
   });
 }
 function saveSession() {
+  if (!activeRound?.submitted || activeRound.saved) return;
   const source = getCleanSource();
   const linkedArticle = saveCurrentArticle({ silent: true });
+  const schedule = calculateReviewSchedule(scoreSlider.value, confidenceSlider.value, linkedArticle || {});
   const attempt = {
     id: createId("attempt"),
     createdAt: new Date().toISOString(),
@@ -836,16 +1351,24 @@ function saveSession() {
       minute: "2-digit",
     }),
     score: scoreSlider.value,
-    recall: recallText.value.trim(),
+    confidence: confidenceSlider.value,
+    reviewQuality: schedule.quality,
+    nextReviewAt: schedule.nextReviewAt,
+    mode: activeRound.mode,
+    expectedPoints: [...activeRound.expectedPoints],
+    recallPoints: activeRound.mode === "threePoints" ? [...activeRound.recallPoints] : [],
+    recall: activeRound.recall,
     summary: sessionSummary(source),
     missing: missingText.value.trim(),
     articleId: linkedArticle?.id || "",
+    contentVersion: linkedArticle?.contentVersion || 1,
+    sourceSnapshot: source,
     articleTitle: linkedArticle?.title || inferArticleTitle(source),
   };
 
   const history = loadMemoryHistory();
   history.unshift(attempt);
-  saveMemoryHistory(history.slice(0, 12));
+  saveMemoryHistory(history);
 
   if (linkedArticle) {
     const articles = loadArticles();
@@ -853,7 +1376,11 @@ function saveSession() {
     if (index >= 0) {
       articles[index] = {
         ...articles[index],
-        status: "trained",
+        status: schedule.status,
+        reviewStage: schedule.status,
+        reviewQuality: schedule.quality,
+        reviewIntervalDays: schedule.intervalDays,
+        nextReviewAt: schedule.nextReviewAt,
         lastTrainedAt: attempt.createdAt,
         updatedAt: attempt.createdAt,
         attempts: [attempt, ...(articles[index].attempts || [])],
@@ -864,7 +1391,12 @@ function saveSession() {
 
   renderMemoryHistory();
   renderArticleLibrary();
+  renderDueReviews();
+  updateMemoryModeDueCount();
   render();
+  clipboardStatus.textContent = linkedArticle ? t("reviewScheduled", { date: reviewDateLabel(schedule.nextReviewAt) }) : "";
+  activeRound.saved = true;
+  saveSessionButton.disabled = true;
   saveSessionButton.textContent = t("saved");
   setTimeout(() => {
     saveSessionButton.textContent = t("saveSession");
@@ -891,9 +1423,24 @@ async function pasteFromClipboard() {
 }
 
 function resetMemoryRound(keepSource = true) {
+  activeRound = null;
+  document.body.classList.remove("recalling");
+  saveSessionButton.disabled = false;
+  document.querySelector("#expectedPreview").textContent = "";
+  document.querySelector("#recallPreview").textContent = "";
+  document.querySelector("#sourcePreview").textContent = "";
+  [1, 2, 3].forEach(i => document.querySelector("#recallPoint" + i).value = "");
+  if (!keepSource) { expectedPointsInput.value = ""; recallMode.value = "free"; }
   stopTimer();
   if (!keepSource) {
     sourceText.value = "";
+    currentArticleId = null;
+    currentSourceVisit = null;
+    articleTitleInput.value = "";
+    articleTagsInput.value = "";
+    impressionInput.value = "";
+    sourceContext.textContent = "";
+    document.querySelector("#contentVersions").replaceChildren();
   }
   recallText.value = "";
   missingText.value = "";
@@ -1258,16 +1805,7 @@ function renderTable(items) {
 }
 
 function sendVisitToMemoryTraining(visit) {
-  currentArticleId = findArticleForVisit(visit)?.id || null;
-  currentSourceVisit = visit;
-  articleTitleInput.value = visit.title || visit.domain || "";
-  const body = visit.content?.trim();
-  sourceText.value = body
-    ? body
-    : `${visit.title}\n\n${visit.url}\n\n${t("noFetchedContent")}`;
-  resetMemoryRound(true);
-  setAppMode("memory");
-  sourceText.focus();
+  loadArticleIntoTrainer(saveVisitToLibrary(visit));
 }
 
 function render() {
@@ -1327,6 +1865,7 @@ function showJsonPrompt(payload, fileName) {
   jsonUpdateStatus.textContent = t("jsonAskUpdate");
   updateJsonButton.disabled = false;
   updateJsonButton.textContent = t("updateJson");
+  dismissJsonPromptButton.classList.remove("hidden");
   jsonStatusPanel.classList.remove("hidden");
 }
 
@@ -1350,7 +1889,7 @@ async function updateImportedJson() {
 
   updateJsonButton.disabled = true;
   updateJsonButton.textContent = t("updating");
-  jsonUpdateStatus.textContent = t("updatingJson");
+  jsonUpdateStatus.textContent = t(importedJsonMeta ? "updatingJson" : "generatingJson");
 
   try {
     const response = await fetch("/api/update-history", {
@@ -1377,7 +1916,7 @@ async function updateImportedJson() {
     jsonUpdateStatus.textContent = t("updateFailed", { message: error.message });
   } finally {
     updateJsonButton.disabled = false;
-    updateJsonButton.textContent = t("updateJson");
+    updateJsonButton.textContent = t(importedJsonMeta ? "updateJson" : "generateData");
   }
 }
 
@@ -1403,10 +1942,19 @@ languageToggleButton.addEventListener("click", () => {
 pasteClipboardButton.addEventListener("click", pasteFromClipboard);
 saveArticleButton.addEventListener("click", () => saveCurrentArticle());
 articleSearchInput.addEventListener("input", renderArticleLibrary);
+articleStatusFilter.addEventListener("change", renderArticleLibrary);
+exportTrainingDataButton.addEventListener("click", exportTrainingData);
+trainingDataFile.addEventListener("change", importTrainingData);
 sampleArticleButton.addEventListener("click", () => {
   currentArticleId = null;
   currentSourceVisit = null;
   articleTitleInput.value = currentLanguage === "zh" ? "記憶如何運作" : "How Memory Works";
+  articleTagsInput.value = currentLanguage === "zh" ? "記憶, 閱讀" : "memory, reading";
+  impressionInput.value = "";
+  sourceContext.textContent = "";
+  document.querySelector("#contentVersions").replaceChildren();
+  expectedPointsInput.value = "";
+  recallMode.value = "free";
   sourceText.value = sampleArticle;
   resetMemoryRound(true);
 });
@@ -1487,3 +2035,114 @@ applyLanguage();
 
 
 
+
+document.querySelector("#captureMemoryButton").addEventListener("click", () => {
+  resetMemoryRound(false);
+  setAppMode("memory");
+  sourceText.focus();
+});
+document.querySelector("#todayReviewButton").addEventListener("click", () => {
+  setAppMode("memory");
+  const first = dueArticles()[0];
+  if (first) loadArticleIntoTrainer(first);
+  else document.querySelector("#dueReviewTitle").scrollIntoView({ behavior: "smooth" });
+});
+
+function renderContentContext(article) {
+  const quality = MemoryContent.quality(article.content || "");
+  const warning = { empty: "qualityEmpty", short: "qualityShort", blocked: "qualityBlocked" }[quality];
+  sourceContext.textContent = [article.sourceUrl || article.sourceFileName || "",
+    warning ? t(warning) : ""].filter(Boolean).join(" · ");
+  const panel = document.querySelector("#contentVersions");
+  panel.replaceChildren();
+  if (article.parentArticleId) {
+    const parent = loadArticles().find(item => item.id === article.parentArticleId);
+    if (parent) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "secondary-button compact";
+      button.textContent = t("sourceParent");
+      button.addEventListener("click", () => loadArticleIntoTrainer(parent));
+      panel.append(button);
+    } else {
+      const note = document.createElement("p");
+      note.textContent = t("parentMissing");
+      panel.append(note);
+    }
+    appendSnapshot(panel, t("originalSnapshot") + " · v" + article.parentVersion, article.parentSnapshot || "");
+  }
+  for (const revision of [...(article.revisions || [])].reverse()) {
+    appendSnapshot(panel, t("savedVersions") + " · v" + revision.version, revision.content);
+  }
+}
+
+function appendSnapshot(panel, label, text) {
+  const details = document.createElement("details");
+  const summary = document.createElement("summary");
+  const body = document.createElement("pre");
+  summary.textContent = label;
+  body.textContent = text;
+  details.append(summary, body);
+  panel.append(details);
+}
+
+async function importTextFile(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    if (file.size > 1024 * 1024) throw new Error("fileSize");
+    const fields = MemoryContent.readTextFile(file.name, await file.text(), file.size);
+    const articles = loadArticles();
+    let article = articles.find(item => !item.parentArticleId &&
+      item.sourceFileName === fields.sourceFileName && item.content === fields.content);
+    if (!article) {
+      const now = new Date().toISOString();
+      article = { ...fields, id: createId("article"), tags: [], impression: "",
+        status: "newReview", contentVersion: 1, revisions: [], attempts: [],
+        createdAt: now, updatedAt: now };
+      saveArticles([article, ...articles]);
+    }
+    loadArticleIntoTrainer(article);
+    refreshLearningViews();
+  } catch (error) {
+    clipboardStatus.textContent = t(error.message) || error.message;
+  } finally {
+    event.target.value = "";
+  }
+}
+
+function splitCurrentArticle() {
+  try {
+    const parent = saveCurrentArticle({ silent: true });
+    if (!parent) return;
+    const chunks = MemoryContent.splitText(parent.content);
+    if (chunks.length < 2) {
+      clipboardStatus.textContent = t("oneSection");
+      return;
+    }
+    const articles = loadArticles();
+    const now = new Date().toISOString();
+    chunks.forEach((content, index) => {
+      const id = parent.id + ":v" + parent.contentVersion + ":part" + (index + 1);
+      if (articles.some(article => article.id === id)) return;
+      articles.push({
+        id, title: parent.title + " · " + (index + 1) + "/" + chunks.length,
+        content, parentArticleId: parent.id, parentVersion: parent.contentVersion,
+        parentSnapshot: parent.content, sectionIndex: index,
+        sourceUrl: parent.sourceUrl || "", sourceBrowser: parent.sourceBrowser || "",
+        sourceDomain: parent.sourceDomain || "", sourceCategory: parent.sourceCategory || "",
+        sourceVisitedAt: parent.sourceVisitedAt || "", sourceFileName: parent.sourceFileName || "",
+        extractionMethod: "section", tags: [...(parent.tags || [])], impression: "",
+        contentVersion: 1, revisions: [], attempts: [], status: "newReview",
+        createdAt: now, updatedAt: now,
+      });
+    });
+    saveArticles(articles);
+    refreshLearningViews();
+    clipboardStatus.textContent = t("sectionsCreated");
+  } catch (error) {
+    clipboardStatus.textContent = error.message;
+  }
+}
+document.querySelector("#textFileInput").addEventListener("change", importTextFile);
+document.querySelector("#splitArticleButton").addEventListener("click", splitCurrentArticle);

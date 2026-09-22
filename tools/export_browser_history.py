@@ -34,6 +34,7 @@ CATEGORY_RULES = [
 
 
 class ReadableTextParser(HTMLParser):
+    void_tags = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
     candidate_tags = {"article", "main", "section", "div", "p", "li", "td"}
     skip_tags = {"script", "style", "noscript", "svg", "canvas", "select", "template"}
     blocked_tags = {"header", "footer", "nav", "aside", "form"}
@@ -51,6 +52,10 @@ class ReadableTextParser(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         tag = tag.lower()
+        if tag in self.void_tags:
+            if tag in {"br", "hr"}:
+                self.handle_data("\n")
+            return
         attr_text = " ".join(value or "" for name, value in attrs if name in {"class", "id", "role", "itemprop"})
         parent_blocked = self.stack[-1]["blocked"] if self.stack else False
         blocked = parent_blocked or tag in self.blocked_tags or bool(self.bad_attrs.search(attr_text))
@@ -58,8 +63,15 @@ class ReadableTextParser(HTMLParser):
         if tag in self.skip_tags:
             self.skip_depth += 1
 
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self.handle_starttag(tag, attrs)
+        if tag.lower() not in self.void_tags:
+            self.handle_endtag(tag)
+
     def handle_endtag(self, tag: str) -> None:
         tag = tag.lower()
+        if not any(frame["tag"] == tag for frame in self.stack):
+            return
         if tag in self.skip_tags and self.skip_depth:
             self.skip_depth -= 1
         while self.stack:
@@ -183,7 +195,10 @@ def json_ld_article_body(html: str, max_chars: int) -> str:
     bodies = re.findall(r'"articleBody"\s*:\s*"((?:\\.|[^"\\])*)"', html, flags=re.I)
     if not bodies:
         return ""
-    decoded = bodies[0].encode("utf-8").decode("unicode_escape", errors="ignore")
+    try:
+        decoded = json.loads('"' + bodies[0] + '"')
+    except (ValueError, TypeError):
+        return ""
     return ReadableTextParser.clean_text(decoded)[:max_chars]
 
 

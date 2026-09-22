@@ -19,3 +19,9 @@ Thumbs.db
 # Logs
 *.log
 
+
+# Isolated browser validation artifacts
+tests/.browser-profile/
+tests/.runtime/
+tests/phase1-browser.html
+tests/brand-desktop.png

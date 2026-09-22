@@ -1,344 +1,278 @@
 # Memorizer Product Plan
 
-Memorizer is evolving from a local prototype into a complete local-first product for reading, recall, spaced review, and browsing-time reflection.
+更新日期：2026-09-15
+本文件取代原本的八階段排序；舊版完整保存在 [PROJECT_PLAN_PRE_BRAND.md](docs/PROJECT_PLAN_PRE_BRAND.md)。
 
-## Product Positioning
+## 1. 品牌願景與產品承諾
 
-Memorizer helps people who read a lot but struggle to recall the main points afterward.
+> 讓記憶留下印象。從生活片段，到持續累積的靈感。
 
-The product combines:
+產品主軸：**收集記憶 → 串連知識 → 喚回靈感**。
 
-- focused reading
-- active recall
-- spaced review
-- article and source management
-- browser-time analysis from Chrome, Edge, and Firefox
-- local-first privacy controls
+Memorizer 是 local-first 的個人記憶與知識工具：把值得保留的內容收進來，透過主動回想建立記憶，再把不同來源的重點連起來，於需要時找回並用自己的話形成新想法。
 
-The core promise:
+主動回想仍是核心。收藏量、瀏覽時數與 AI 摘要數量都不能單獨代表學會了。瀏覽分析是發現素材與反思注意力的入口；產品應能直接貼入內容開始使用，不必先匯入瀏覽紀錄。
 
-> Read with attention, recall without looking, and know what is actually staying in memory.
+### 品牌落地原則
 
-## Integrated Product Loop
+- 採用已確認的雙層「記憶印痕」圖標與專屬 Memorizer 字標。
+- 深墨藍、象牙白、石灰色為主色；以清楚層級、簡單線條與留白傳達沉穩感。
+- 圖標為視覺主角，字標保持輔助比例；品牌字標後續整理成向量資產，不直接以一般字型替代。
+- 內文優先可讀性，採系統字型，不新增商業字型依賴。圖標與文字對比、鍵盤操作及窄螢幕需驗收。
+- 願景圖中的照片、語音與知識連線是未來能力，不代表現有產品已支援。
 
-Browsing Time and Memory Training should not feel like two separate tools.
+## 2. 現況盤點
 
-Browsing Time is the attention source:
+以下依目前工作區 README、app.js 與匯出工具的靜態檢查整理；不是本次執行測試的結果。
 
-- What did I spend time on?
-- Which pages were probably worth remembering?
-- Which visits are still unprocessed?
-- Which visits became articles, training sessions, or reviews?
+| 能力 | 現況 | 新階段處理 |
+| --- | --- | --- |
+| 貼上、剪貼簿、計時閱讀、遮蔽原文回想、提示、漏點紀錄 | 已有實作 | Phase 2 深化 |
+| 文章儲存、載入、刪除、搜尋及狀態篩選 | 已有實作 | Phase 1 補齊可靠性 |
+| 文章標題與標籤 | 有介面與部分資料處理，但 saveCurrentArticle 未明確儲存輸入標題及標籤 | Phase 1 優先修正並驗收 |
+| 瀏覽紀錄匯入、分類圖表、圖表下鑽、送入文章庫或訓練 | 已有實作 | Phase 1 整合入口；Phase 4 深化反思 |
+| 文章關聯回想紀錄、分數及信心、到期佇列 | 已有實作 | Phase 2 補完整歷史與排程 |
+| 1／3／7／14 天複習 | 初版，依當次自評與信心決定；高分可直接標示 mastered | Phase 2 改善多次表現判定 |
+| JSON 備份／還原、localStorage 儲存、繁中／英文介面 | 已有實作 | 各階段維持相容與資料完整 |
+| 重點卡、跨文章連結、反向連結、靈感筆記 | 尚未在本次檢查中確認實作 | Phase 3–4 新增 |
+| 圖片／語音素材、OCR／轉錄、AI 協助、桌面安裝包 | 規劃能力 | Phase 5–6 |
 
-Memory Training is the retention system:
+原 Phase 1 與 Phase 2 的既有成果繼續使用，不能因重新編號就列為未開始。全域近期歷史目前只保留 12 筆；文章內另有 attempts，完整歷史應以文章紀錄為基礎整理，避免誤判全部紀錄都被刪除。
 
-- What did I actually retain?
-- What should I review next?
-- Which topics keep slipping away?
-- Which browsing categories are turning into durable knowledge?
+## 3. 新版 Phases
 
-The intended product loop:
+狀態：「基線已有」表示現有程式具備部分能力；所有新增項目仍待實作。各階段以驗收門檻推進，不預先承諾缺乏工時評估的日期。
 
-1. Import browsing data from Chrome, Edge, or Firefox.
-2. Review time spent by category, site, hour, or visit.
-3. Select useful visits and convert them into saved articles.
-4. Train recall from those articles.
-5. Save recall attempts and missed points.
-6. Schedule spaced review.
-7. Compare browsing attention with retained knowledge.
+### Phase 0 — 品牌與產品入口對齊
 
-Each browser visit should eventually have a learning status:
+**狀態：品牌方向已確認；產品介面待落地。**
 
-- Not reviewed
-- Not useful
-- Needs content
-- Added to library
-- Trained
-- Due for review
-- Mastered
+目標：第一次打開就理解「留下值得記住的內容，今天回想，之後找回」。
 
-Each saved article should keep its origin:
+範圍：
 
-- source URL
-- source browser
-- source visit timestamp
-- source category
-- source visit ID when available
-- extraction method: fetched page, clipboard, manual paste, PDF, Markdown, or text file
+- 整理定稿 Logo 的向量版、透明版與色彩規格；介面使用一致資產。
+- 設計「今日、記憶庫、回想、瀏覽洞察」入口；後續才在對應階段啟用知識連結與靈感功能。
+- 今日先顯示既有到期複習、收集入口與最近素材，不等待完整儀表板。
+- 用語統一：收藏不等於記住；自評不稱為客觀記憶率。
+- 更新空狀態與首次使用引導，支援繁中／英文。
 
-This makes the key product question visible:
+驗收：
 
-> Did this browsing time become knowledge, or did it only become activity?
+- 使用者可從首頁直接加入一段文字，或開始一筆到期複習。
+- 主流程在窄螢幕與鍵盤操作下可完成，品牌色對比可讀。
+- 不顯示尚未實作的圖片、語音或 AI 能力為可用功能。
 
-## Current Baseline
+### Phase 1 — 可靠收集：留下內容與當下印象
 
-Already implemented:
+**狀態：基線已有，下一個開發 sprint 優先完成。依賴：沿用既有文章模型；可與 Phase 0 視覺整理分開推進。**
 
-- Memory Training page
-- paste or clipboard-load passage input
-- timed reading flow
-- hidden-source recall phase
-- hint and review flow
-- bilingual Traditional Chinese / English UI
-- Browsing Time page
-- Chrome, Edge, and Firefox browsing data export
-- imported JSON generated-time prompt
-- local server update API
-- category and hourly charts
-- click chart bars to filter visit logs
-- send visit content into memory training
-- local-first safety documentation
+目標：每一筆值得保留的內容都有可讀原文、來源，以及「我為什麼想記住它」。
 
-## Phase 1 First Implementation Slice
+範圍：
 
-Implemented in the current local-first version:
+- 修正並驗收標題、標籤儲存；保留穩定 ID、來源網址、瀏覽器、時間、內容取得方式。
+- 新增「我的印象／為什麼保留」欄位，與原文分開儲存。
+- 補齊 Needs Content 的手動修復流程：保留來源，貼上或剪貼簿補文，再轉成可訓練素材。
+- 改善正文擷取、低品質內容提示；main／right／all 選項保留。擷取失敗不得假裝成功。
+- TXT／Markdown 匯入、長文分段；分段仍可追溯母文章。
+- 重複匯入與同網址內容更新有明確規則，不靜默覆蓋印象與回想紀錄。
+- 加入資料格式版本；既有 JSON 備份／還原涵蓋新欄位，能讀取舊資料。
 
-- Article title field in Memory Training.
-- Save Article from the passage box.
-- Article Library panel with search/filter.
-- Load saved articles back into Memory Training.
-- Add browsing visits to Article Library from Visit Details.
-- Visit learning status in the Visits table: Not reviewed, Needs content, Added, Trained.
-- Recall attempts linked to saved articles.
+驗收：
 
-Still remaining for the full phase:
+- 文字、瀏覽來源與檔案皆能成為同一記憶庫的素材。
+- 自訂標題、標籤、印象及來源在編輯、重新整理、匯出再還原後保留。
+- 無正文的瀏覽項目可以補文，且 ID 與来源關聯不變。
+- 重複匯入不產生不可辨識的副本，也不遺失既有 attempts。
 
-- Tags and richer filters.
-- Dedicated import/export for saved training data.
-- Better article editing controls.
-- Stronger migration path from localStorage to IndexedDB or SQLite.
-## Phase 1: Article Library And Training Records
+### Phase 2 — 建立記憶：主動回想與持續複習
 
-Goal: make browsing visits and training sessions persist as one useful learning record.
+**狀態：基線已有。依賴：Phase 1 的可靠內容與識別。**
 
-Tasks:
+目標：讓收藏的素材形成可持續的記憶練習。
 
-- Add an article library view.
-- Save articles with title, source URL, source visit metadata, tags, created date, and last trained date.
-- Save each recall attempt with typed recall text, score, confidence, and timestamp.
-- Let users reopen previous articles for another training session.
-- Add a simple article search and filter by tag/source/status.
-- Add "Add to Library" from visit rows.
-- Show whether a visit is Not reviewed, Added, Trained, Due, or Mastered.
-- Add export/import for saved training data.
+範圍：
 
-Success criteria:
+- 保留自由回想，先新增「三個重點」模式與使用者可編輯的預期重點。
+- 原文、回想、预期重點與漏點並列比較；完成回想前不先揭露答案。
+- 每篇文章可查看完整歷次回想、使用提示情形、自評、信心與下次日期。
+- 在既有排程上加入多次表現、自訂間隔與手動調整；一次高信心不直接等同長期掌握。
+- 漏點可加入下次複習；補齊到期、逾期、時區及跨日行為。
+- 三重點模式驗收後再加入手動 Q&A 與填空模式，沿用同一訓練紀錄結構。
 
-- A user can save a passage and revisit it later.
-- A user can see prior recall attempts for the same article.
-- A user can tell which browsing visits became learning material.
-- Training history survives browser refresh and app restart.
+驗收：
 
-## Phase 2: Spaced Review
+- 完成一次回想會存下文章關聯紀錄並安排下一次複習。
+- 可從文章看到超過 12 筆的既有訓練紀錄；近期摘要與完整歷史分開。
+- 修改原文後，舊回想保留當時內容版本或快照，避免比較對象悄悄改變。
+- 無 AI、無帳號也能完成訓練與複習；自評資料明確標示為自評。
 
-Goal: turn one-time recall into long-term memory practice.
+### Phase 3 — 串連知識：從文章變成自己的理解
 
-Tasks:
+**狀態：新增。依賴：Phase 1 資料基礎與 Phase 2 重點／版本模型。**
 
-- Add review states: New, Learning, Due, Mastered.
-- Add spaced intervals: 1 day, 3 days, 7 days, 14 days, custom later.
-- Let users mark recall quality after each session.
-- Calculate next review date from score and confidence.
-- Add a Due Today section.
-- Add overdue review count in the main navigation.
+目標：讓使用者說清楚不同記憶之間有什麼關係。
 
-Success criteria:
+範圍：
 
-- A user knows what to review today.
-- A completed recall session schedules the next review automatically.
-- The app can distinguish new, learning, due, and mastered material.
+- 從文章或回想產生使用者可編輯的重點卡，保留來源、段落與版本。
+- 支援手動連結、反向連結與關係說明，例如補充、相似、矛盾、例子。
+- 用主題集合整理多篇文章與重點卡；標籤搜尋能導向對應素材。
+- 先提供實用的相關項目清單與來源跳轉，關係圖留待清單流程成立後評估。
+- 備份、刪除與還原涵蓋卡片及連結；來源刪除時明確處理失效連結。
 
-## Phase 3: Better Recall Modes
+驗收：
 
-Goal: support different kinds of memory training, not only free recall.
+- 能將兩篇文章的重點連結，寫下關係，並從任一端返回另一端。
+- 每張重點卡都能辨識原文與自己的詮釋；不混為同一來源。
+- 完整備份還原後，卡片、來源與雙向連結一致。
 
-Tasks:
+### Phase 4 — 喚回靈感：找得到，也用得出來
 
-- Keep free recall as the default mode.
-- Add "3 main points" mode.
-- Add Q&A card mode.
-- Add cloze deletion mode.
-- Let users write or edit their own expected key points.
-- Add a comparison screen for source text, user recall, and expected key points.
-- Track common missed-point patterns.
+**狀態：新增。依賴：Phase 2 複習紀錄與 Phase 3 連結資料。**
 
-Success criteria:
+目標：面對問題時，找回過去內容，用自己的話形成新的想法。
 
-- A user can choose the recall style that fits the article.
-- A user can compare recall against manually written key points.
-- Missed content becomes visible and reusable for later review.
+範圍：
 
-## Phase 4: Content Extraction Improvements
+- 全文搜尋文章、印象、重點卡與靈感筆記，提供片段、來源及篩選。
+- 從主題或搜尋結果找回相關記憶；手動選取多張卡形成一篇靈感筆記，保留引用關聯。
+- 今日頁整合到期項目與可重訪的舊內容，允許略過與關閉重訪建議。
+- 週回顧呈現收藏、回想、反覆漏點及應用紀錄；不把活動量包裝成客觀記憶率。
+- 瀏覽洞察支援週／月趨勢、自訂分類、多檔去重、批次收藏及學習狀態篩選。
+- 注意力報表顯示哪些瀏覽來源被收藏、訓練及引用，不將瀏覽時間直接當成學習成果。
 
-Goal: make imported web pages more useful as training material, and make failed extraction recoverable.
+驗收：
 
-Tasks:
+- 用關鍵字找回旧文章中的重點，追溯原文，並引用到一篇新筆記。
+- 能從一篇靈感筆記返回其多個來源。
+- 週回顧數字可追溯至實際紀錄；搜尋與筆記功能可完全本機運作。
 
-- Improve automatic main-content detection.
-- Keep manual content region options: main, right, all.
-- Extract title, canonical URL, author, and published date when available.
-- Strip navigation, ads, related links, and repeated footer text.
-- Detect low-confidence or missing page content.
-- Add a "Needs Content" state for visits that cannot be converted into useful text.
-- Let users paste content into a visit or article manually.
-- Add a clipboard-assisted repair flow: open the page, copy the useful part, then load clipboard into the article.
-- Preserve page title, URL, domain, category, and visit time even when content cannot be fetched.
-- Offer a lightweight note field so users can write what the page was about when extraction fails.
-- Support Markdown, TXT, and PDF import.
-- Split long articles into smaller training blocks.
+**核心產品里程碑：Phase 0–4 完成後，「收集 → 記住 → 連結 → 找回與應用」形成完整文字內容閉環。**
 
-Success criteria:
+### Phase 5 — 擴充記憶：多媒體與可選智慧協助
 
-- Visit-to-training usually produces readable article text.
-- Failed extraction is visible and recoverable instead of silently producing empty content.
-- Long articles can be trained section by section.
-- Non-browser sources can be added to the same article library.
+**狀態：後續擴充。依賴：Phase 4 閉環成立，及下述儲存升級門檻。**
 
-## Phase 5: Browsing Time Productization
+目標：將願景圖中的照片與語音接入同一個記憶流程。
 
-Goal: make Browsing Time a useful reflection tool and a reliable source of training material.
+範圍：
 
-Tasks:
+- 先完成附件儲存、大小限制、備份及刪除；多媒體不塞入 localStorage。
+- 依序評估 PDF 文字擷取、圖片＋手動印象、音訊附件＋手動筆記。
+- 再加入可修訂的 OCR／轉錄；標示文字來自擷取或轉錄，保留原始來源。
+- AI 為獨立可選增量：建議重點、標籤、關聯、問答及回想後的漏點回饋。
+- 支援供應商選擇與可行的本機模型接法，先驗證單一完整流程，再擴增供應商。
+- 預設關閉 AI；傳送前顯示選定內容與目的，說明金鑰儲存方式；不預設整批上傳瀏覽紀錄。
+- 保存模型、時間、來源版本與生成標記；部分原文推測不能冒充完整摘要。
+- 本機可用的 OCR／轉錄與需要雲端傳送的服務需明確區分。
 
-- Add weekly and monthly trends.
-- Add Focus vs Distraction classification.
-- Add custom category rules by domain, keyword, and optional regex.
-- Allow category editing from visit rows.
-- Add batch import from multiple JSON files.
-- Deduplicate visits across imports.
-- Add "add selected visits to training queue."
-- Add filters for Not reviewed, Needs content, Added, Trained, Due, and Mastered.
-- Show trained vs untrained time by category.
+驗收：
 
-Success criteria:
+- 一張圖片或一段語音能附上印象、被搜尋與連結，且備份還原後可開啟。
+- 外部處理失败時保留原檔與手動流程，不阻擋文字核心功能。
+- 關閉 AI 後 Phase 0–4 的完整流程仍成立。
+- AI 回饋標為建議，使用者可修訂，不能直接宣告已掌握。
 
-- A user can understand where browsing time went across days and weeks.
-- A user can fix wrong categories.
-- Useful visited pages can become training material in batches.
-- Browsing analysis shows which attention turned into training.
+### Phase 6 — 可長期使用：桌面交付與發佈
 
-## Phase 6: Optional AI Assistance
+**狀態：待核心流程稳定。依賴：Phase 4；Phase 5 非首次文字版發佈的必要條件。**
 
-Goal: let users connect AI services to help understand pages and evaluate recall quality, while keeping the product local-first and user-controlled.
+目標：非技術使用者能安装、備份、更新與長期使用。
 
-Possible providers:
+範圍：
 
-- ChatGPT / OpenAI
-- Claude / Anthropic
-- Gemini / Google
-- local LLMs when available
+- 依實測需求選定 IndexedDB 或 SQLite；遷移不必等本階段，最遲於多媒體或正式發佈前完成。
+- 加入資料迁移預檢、備份、失敗回復及還原演練。
+- 提供私密瀏覽資料清除與匯出前檢視；區分清除來源紀錄和刪除已收藏知識。
+- 在 Tauri／Electron 中評估並選定一種，處理本機 Python 工具的交付方式。
+- Windows 安裝包、首次引導、示範資料、版本更新與發佈檢查清單。
+- 提供符合品牌的截圖與說明，不把未推出能力放進已支援清單。
+- App 外複習提醒採使用者開啟，避免依賴開發伺服器或終端操作。
 
-AI-assisted page understanding:
+驗收：
 
-- Summarize a fetched article into key points.
-- Infer what a page is about from title, URL, metadata, and partial text when full content cannot be fetched.
-- Suggest tags and categories.
-- Detect whether a visit is likely worth memorizing.
-- Generate candidate questions, cloze deletions, and three-main-point prompts.
-- Mark low-confidence summaries clearly when the model only has partial content.
+- 在乾淨 Windows 環境安裝後，不必手動啟動 Python 即可完成文字核心流程。
+- 舊版資料遷移與備份還原經過演練，失敗可回到原資料。
+- 未啟用外部功能時，私人內容不會自動傳送到外部。
+- 發佈說明清楚區分文字核心與可選多媒體／AI 功能。
 
-AI-assisted recall evaluation:
+## 4. 跨階段的資料與品質門檻
 
-- Compare the user's recall against the source article or expected key points.
-- Estimate recall coverage as a percentage.
-- Identify missing main points.
-- Separate minor wording differences from real conceptual gaps.
-- Suggest what to review next.
-- Produce a short feedback note without revealing the full answer too early.
+- 各階段新增欄位都必須涵蓋備份還原、刪除與舊資料相容；隱私不是最後才補。
+- 沿用 article ID／attempt 關聯，逐步新增 impression、contentVersion、keyPoint、relation、insightNote、attachment；先定義關聯再擴大儲存。
+- 本機 HTTP 邊界與目前 Host／Origin／Referer 等保護持續保留，參照 SECURITY.md。
+- 自動擷取、OCR、AI 生成與使用者筆記要能分辨，不覆蓋原始來源。
+- 每階段以端到端使用情境驗收，針對資料損失、排程與匯入相容性做必要測試。
+- 儲存升級由容量與關聯查詢需求觸發；Phase 3 若已有需要就提前執行，不等 Phase 6。
+- 不以品牌調整為由重做已工作的底層，也不把品牌定稿當成程式已完成。
 
-Privacy and control requirements:
+## 5. 舊版階段對照
 
-- AI features must be optional and off by default.
-- The app should show exactly what text will be sent before sending it.
-- Users should be able to choose provider, model, and whether API keys are stored locally.
-- Browser history should never be sent in bulk by default.
-- Prefer sending one selected article or recall attempt at a time.
-- Keep a local-only mode that works without any AI login or API key.
-- Store AI outputs with provider, model, timestamp, and source text version for auditability.
+| 舊版 | 新版安排 |
+| --- | --- |
+| Phase 1 文章庫與紀錄 | Phase 1 延續基線；歷史深化到 Phase 2 |
+| Phase 2 間隔複習 | Phase 2 完成排程與歷史 |
+| Phase 3 回想模式 | Phase 2；重點卡連結到 Phase 3 |
+| Phase 4 正文擷取 | 修復與文字檔提前 Phase 1；PDF／多媒體到 Phase 5 |
+| Phase 5 瀏覽分析產品化 | Phase 1 入口整合；進階分析到 Phase 4 |
+| Phase 6 可選 AI | Phase 5；文字核心不依賴 AI |
+| Phase 7 個人儀表板 | Phase 0 今日入口；Phase 4 完整回顧 |
+| Phase 8 資料、隱私與桌面 | 資料／隱私貫穿各階段；包裝到 Phase 6 |
+| 原計畫未明確涵蓋 | Phase 3 知識連結、Phase 4 靈感應用、Phase 5 圖像／語音 |
 
-Product boundary:
+## 6. 下一個 Sprint：先把「留下印象」做完整
 
-AI should support memory training, not replace it. The user still performs active recall first. AI appears after recall to help judge coverage, reveal missed points, and prepare the next review.
+本次只調整規劃文件；以下皆是下一輪實作範圍。
 
-Success criteria:
+1. 修正標題／標籤儲存，確認載入、編輯與再儲存不丟欄位。
+2. 加入「我的印象」欄位，並整合記憶庫搜尋及顯示。
+3. 完成 Needs Content 補文流程，保留原來源與 ID。
+4. 為新欄位加入格式版本及舊 JSON 相容，驗收備份往返。
+5. 在上述資料流程成立後，套用品牌色與定稿 Logo，加入精簡今日入口。
 
-- A user can understand partially fetched pages better without pretending low-confidence guesses are facts.
-- A user can get useful recall feedback without manually writing all expected key points.
-- Private browsing data remains local unless the user explicitly sends selected content.
+Sprint 驗收腳本：
 
-## Phase 7: Personal Dashboard
+- 從一筆缺文瀏覽來源加入素材 → 補文 → 自訂標題／標籤／印象 → 儲存。
+- 重新整理後找回素材 → 編輯 → 完成回想 → 確認文章關聯及下次複習。
+- 匯出 → 在隔離測試環境還原 → 比對來源、印象、標籤與 attempts。
+- 載入舊格式測試備份及重複匯入，確認相容、去重與錯誤提示。
+- 使用合成測試資料，不把私人瀏覽紀錄放入測試、文件或版本控制。
 
-Goal: give users a daily and weekly learning cockpit.
+完成此 sprint 後進入 Phase 2 的「三個重點＋完整文章歷史」，再落實 Phase 3 手動知識連結。
 
-Tasks:
 
-- Add today's reading count.
-- Add today's recall count.
-- Add due review count.
-- Add retention or self-score trend.
-- Add most-forgotten topics.
-- Add training streak.
-- Add weekly summary: what was read, what was recalled, what is due, and where browsing time went.
-- Add attention-to-retention metrics: browsing time, articles added, recall attempts, due reviews, and mastered items.
-- Add "unconverted attention" section for high-time visits or categories that have not become articles.
+## 7. 開發進度 — 2026-09-16
 
-Success criteria:
+已完成新版下一個 sprint 的首批實作：
 
-- Opening the app immediately shows what matters today.
-- Progress and memory gaps are visible without digging through logs.
-- The user can see the gap between time spent browsing and knowledge retained.
+- 標題儲存經驗證原已使用自訂輸入；補上標籤的儲存與載入。
+- 我的印象欄位、記憶庫顯示與搜尋。
+- 缺文提示與正文分離，補文保留來源 ID，手動補文標記取得方式。
+- 重複收藏不覆蓋既有資料；從瀏覽列表收藏不污染當前編輯草稿。
+- JSON v2 備份、舊 v1／文章陣列相容、版本與基本資料驗證、依時間合併及保留回想紀錄；第二筆寫入失敗時回復原儲存。
+- 定稿 Logo 原圖、品牌配色、今日收集與複習入口、繁中／英文文案。
 
-## Phase 8: Data, Privacy, And Packaging
+驗證：node tests/memory-data.test.cjs、node --check app.js、Python 編譯檢查；另使用獨立 Edge profile 檢視桌面頁面。
 
-Goal: prepare for broader public use.
+仍待完成：Phase 0 的向量資產與完整導覽／新手引導；Phase 1 的 TXT／Markdown 匯入、長文分段、擷取品質與同網址內容版本策略。Phase 2–6 尚未完成，不應將本次增量視為全部階段完成。
 
-Tasks:
 
-- Move persistent app data from localStorage to local SQLite or IndexedDB.
-- Add explicit backup and restore.
-- Add one-click clear private browsing data.
-- Add a privacy review screen before exporting/sharing.
-- Package as a desktop app with Tauri or Electron.
-- Add Windows installer.
-- Add demo data.
-- Add onboarding for first-time users.
-- Add screenshots or demo GIF to README.
-- Add GitHub release checklist.
+## 8. Phase 1 收尾 — 2026-09-16
 
-Success criteria:
+本輪完成 Phase 1 的剩餘功能範圍：
 
-- Non-technical users can install and run the app.
-- Private browsing data stays local by default.
-- The GitHub project looks understandable and trustworthy.
+- UTF-8 TXT／Markdown 匯入（1 MB 上限）；Markdown 以純文字保留，不執行 HTML。
+- 最多 1,200 Unicode 字元的分段，優先以句尾／換行切分，保留母文章 ID、版本及來源快照。
+- 相同母文章版本重複分段不建立副本；修改子段不覆寫母文章。母文章刪除後仍可查看快照。
+- 正文修改保留舊版並重設複習日期；新增回想紀錄保存來源版本及快照。
+- 空白／短內容／疑似驗證頁提示；修正中文 JSON-LD 解碼及 HTML 單標籤解析。
+- 備份合併保留歷次版本與分段關聯；相同 ID 的不同正文保留衝突內容為唯讀版本。
+- 同名同內容檔案匯入重用文章；變更檔案另存，瀏覽同網址重用原文並由使用者明確編輯更新。
 
-## Recommended Build Order
+驗證通過：資料與內容 Node 測試、4 個 Python 擷取測試、隔離 Chrome 真實 DOM 流程（匯入、分段、編輯、快照、搜尋、還原、雙語），以及語法與差異檢查。
 
-1. Article library and training records.
-2. Spaced review.
-3. Better recall modes.
-4. Improved content extraction and missing-content repair.
-5. Browsing Time productization.
-6. Optional AI assistance.
-7. Personal dashboard.
-8. Desktop packaging and release polish.
+限制：擷取品質提示為啟發式，未保證所有網站正文完整；1 MB 是匯入上限，實際儲存仍受 localStorage 容量約束。完整資料庫迁移保留於後續規劃。Phase 0 尚有向量資產、完整導覽與新手引導待完成。
 
-## Near-Term Next Sprint
-
-Recommended next sprint: Phase 1.
-
-Concrete first implementation slice:
-
-- Add an article model in app state.
-- Add "Save Article" from the Memory Training passage box.
-- Add "Add to Library" from the Visits table.
-- Add an Article Library section.
-- Add saved recall attempts per article.
-- Track the learning status of visits imported from browsing data.
-- Store data in localStorage first, with a clear migration path to IndexedDB or SQLite later.
-
-Why this first:
-
-- It directly strengthens the memory-training core.
-- It makes browsing history and memory training part of the same loop.
-- It makes the app useful beyond a single session.
-- It creates the data foundation for spaced review and dashboard features.
+下一階段：Phase 2 的三重點回想、文章完整歷史與多次表現排程。
