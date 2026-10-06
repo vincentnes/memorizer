@@ -186,3 +186,8 @@ and consecutive scores of 4–5 advance through 3, 7, 14, and 30 days. Three con
 strong attempts earn mastery; weaker performance breaks the streak. Confidence is recorded
 separately. Source or expected-point edits reset scheduling, retaining historical attempts.
 Only attempts for the current source version and expected points count toward the streak.
+After a recall session, choose an automatic interval or override it with 1–365 days.
+The selected interval is saved with the attempt. Starting a new round returns to automatic scheduling.
+Previously missed points from the latest attempt for the current source version appear after recall submission.
+Each new attempt preserves that comparison and records hints used. An empty missed-points entry clears the next comparison.
+Reviews are due on their local calendar date; the queue refreshes every minute and when returning to the tab.

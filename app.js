@@ -245,6 +245,11 @@ const translations = {
     searchPlaceholder: "網域、標題或分類",
     browsingDataSource: "瀏覽資料",
     generateData: "產生瀏覽資料",
+    previousMissingPoints: "上次漏掉的重點",
+    hintsUsed: "使用提示",
+    reviewInterval: "下次複習間隔（天）",
+    automaticInterval: "自動安排",
+    customInterval: "自訂天數（1–365）",
     updateJson: "更新 JSON",
     updating: "更新中",
     later: "稍後",
@@ -435,6 +440,11 @@ const translations = {
     searchPlaceholder: "Domain, title, or category",
     browsingDataSource: "Browsing Data",
     generateData: "Generate Browsing Data",
+    previousMissingPoints: "Previously missed points",
+    hintsUsed: "Hints used",
+    reviewInterval: "Next review interval (days)",
+    automaticInterval: "Automatic",
+    customInterval: "Custom days (1–365)",
     updateJson: "Update JSON",
     updating: "Updating",
     later: "Later",
@@ -612,7 +622,8 @@ function startReading() {
 
   resetMemoryRound(true);
   const article = saveCurrentArticle({ silent: true });
-  activeRound = { mode: recallMode.value, expectedPoints: expected, articleId: article.id, submitted: false, saved: false };
+  activeRound = { mode: recallMode.value, expectedPoints: expected, articleId: article.id,
+    previousMissing: latestMissingPoints(article), hintsUsed: [], submitted: false, saved: false };
   readingText.textContent = text;
   phaseLabel.textContent = t("reading");
   hideNowButton.disabled = false;
@@ -666,6 +677,7 @@ function keywordCandidates(text) {
 }
 
 function showLowHint() {
+  if (activeRound && !activeRound.submitted) activeRound.hintsUsed.push("keywords");
   const text = getCleanSource();
   const keywords = keywordCandidates(text);
   const count = Number(targetPoints.value) || 4;
@@ -675,6 +687,7 @@ function showLowHint() {
 }
 
 function showStructureHint() {
+  if (activeRound && !activeRound.submitted) activeRound.hintsUsed.push("structure");
   const text = getCleanSource();
   const sentences = sentenceCandidates(text);
   const count = Math.min(Number(targetPoints.value) || 4, Math.max(2, sentences.length));
@@ -691,6 +704,8 @@ function finishRecall() {
   activeRound.recallPoints = [1, 2, 3].map(i => document.querySelector("#recallPoint" + i).value.trim());
   activeRound.recall = activeRound.mode === "threePoints" ? activeRound.recallPoints.map((p, i) => `${i + 1}. ${p}`).join("\n") : recallText.value.trim();
   activeRound.submitted = true;
+  document.querySelector("#previousMissingPreview").textContent = activeRound.previousMissing;
+  document.querySelector("#previousMissingComparison").classList.toggle("hidden", !activeRound.previousMissing);
   document.body.classList.remove("recalling");
   document.querySelector("#expectedPreview").textContent = activeRound.mode === "threePoints" ? activeRound.expectedPoints.map((p, i) => `${i + 1}. ${p}`).join("\n") : "";
   document.querySelector("#expectedComparison").classList.toggle("hidden", activeRound.mode !== "threePoints");
@@ -932,15 +947,29 @@ function addDays(date, days) {
   return next;
 }
 
+function latestMissingPoints(article) {
+  const attempts = (article.attempts || []).filter(attempt =>
+    (attempt.contentVersion || 1) === (article.contentVersion || 1)
+  ).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  return attempts[0]?.missing || "";
+}
+
 function isReviewDue(article, now = new Date()) {
   if (!article.nextReviewAt) {
     return false;
   }
   const due = new Date(article.nextReviewAt);
-  return !Number.isNaN(due.getTime()) && due <= now;
+  const today = new Date(now);
+  due.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  return !Number.isNaN(due.getTime()) && due <= today;
 }
 
-function calculateReviewSchedule(scoreValue, confidenceValue, article = {}) {
+document.querySelector("#reviewInterval").addEventListener("change", (event) => {
+  document.querySelector("#customReviewDays").hidden = event.target.value !== "custom";
+});
+
+function calculateReviewSchedule(scoreValue, confidenceValue, article = {}, customDays = null) {
   const quality = Math.min(5, Math.max(0, Number(scoreValue) || 0));
   const attempts = (article.attempts || []).filter(a =>
     (a.contentVersion || 1) === (article.contentVersion || 1) &&
@@ -953,7 +982,8 @@ function calculateReviewSchedule(scoreValue, confidenceValue, article = {}) {
       strongStreak++;
     }
   }
-  const intervalDays = quality < 3 ? 1 : quality < 4 ? 3 : [3, 7, 14, 30][Math.min(strongStreak - 1, 3)];
+  const automaticDays = quality < 3 ? 1 : quality < 4 ? 3 : [3, 7, 14, 30][Math.min(strongStreak - 1, 3)];
+  const intervalDays = Number.isInteger(customDays) && customDays >= 1 && customDays <= 365 ? customDays : automaticDays;
   return { quality, strongStreak, intervalDays, status: strongStreak >= 3 ? "mastered" : "learning",
     nextReviewAt: addDays(new Date(), intervalDays).toISOString() };
 }
@@ -1254,7 +1284,7 @@ function renderArticleLibrary() {
       const meta = document.createElement("p");
       meta.textContent = `${attempt.createdAt || attempt.date || ""} · ${t(attempt.mode === "threePoints" ? "threePoints" : "freeRecall")} · ${attempt.score ?? "—"} / 5 · ${t("confidence")}: ${attempt.confidence ?? "—"} · ${t("sourceVersion")} ${attempt.contentVersion || 1}`;
       entry.append(meta);
-      [["yourRecall", attempt.recall], ["expectedPoints", (attempt.expectedPoints || []).join("\n")], ["missingLabel", attempt.missing], ["originalText", attempt.sourceSnapshot], ["nextReview", attempt.nextReviewAt]].forEach(([key, value]) => {
+      [["yourRecall", attempt.recall], ["expectedPoints", (attempt.expectedPoints || []).join("\n")], ["previousMissingPoints", attempt.previousMissing || ""], ["missingLabel", attempt.missing], ["hintsUsed", attempt.hintsUsed ? String(attempt.hintsUsed.length) : "—"], ["originalText", attempt.sourceSnapshot], ["nextReview", attempt.nextReviewAt]].forEach(([key, value]) => {
         const label = document.createElement("strong");
         label.textContent = key === "nextReview" ? t(key, {date: value || "—"}) : t(key);
         const body = document.createElement("div");
@@ -1338,9 +1368,17 @@ function renderMemoryHistory() {
 }
 function saveSession() {
   if (!activeRound?.submitted || activeRound.saved) return;
+  const intervalControl = document.querySelector("#reviewInterval");
+  const customInput = document.querySelector("#customReviewDays");
+  const customDays = intervalControl.value === "custom" ? Number(customInput.value) : intervalControl.value ? Number(intervalControl.value) : null;
+  if (customDays !== null && (!Number.isInteger(customDays) || customDays < 1 || customDays > 365)) {
+    customInput.reportValidity();
+    customInput.focus();
+    return;
+  }
   const source = getCleanSource();
   const linkedArticle = saveCurrentArticle({ silent: true });
-  const schedule = calculateReviewSchedule(scoreSlider.value, confidenceSlider.value, linkedArticle || {});
+  const schedule = calculateReviewSchedule(scoreSlider.value, confidenceSlider.value, linkedArticle || {}, customDays);
   const attempt = {
     id: createId("attempt"),
     createdAt: new Date().toISOString(),
@@ -1353,6 +1391,10 @@ function saveSession() {
     score: scoreSlider.value,
     confidence: confidenceSlider.value,
     reviewQuality: schedule.quality,
+    reviewIntervalDays: schedule.intervalDays,
+    reviewIntervalMode: customDays === null ? "automatic" : "manual",
+    previousMissing: activeRound.previousMissing,
+    hintsUsed: [...activeRound.hintsUsed],
     nextReviewAt: schedule.nextReviewAt,
     mode: activeRound.mode,
     expectedPoints: [...activeRound.expectedPoints],
@@ -1423,6 +1465,10 @@ async function pasteFromClipboard() {
 }
 
 function resetMemoryRound(keepSource = true) {
+  document.querySelector("#previousMissingPreview").textContent = "";
+  document.querySelector("#previousMissingComparison").classList.add("hidden");
+  document.querySelector("#reviewInterval").value = "";
+  document.querySelector("#customReviewDays").hidden = true;
   activeRound = null;
   document.body.classList.remove("recalling");
   saveSessionButton.disabled = false;
@@ -2146,3 +2192,11 @@ function splitCurrentArticle() {
 }
 document.querySelector("#textFileInput").addEventListener("change", importTextFile);
 document.querySelector("#splitArticleButton").addEventListener("click", splitCurrentArticle);
+
+function refreshReviewQueue() {
+  if (document.hidden) return;
+  renderDueReviews();
+  updateMemoryModeDueCount();
+}
+setInterval(refreshReviewQueue, 60000);
+document.addEventListener("visibilitychange", refreshReviewQueue);

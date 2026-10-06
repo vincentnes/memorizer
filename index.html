@@ -157,6 +157,7 @@
               </div>
 
               <section id="expectedComparison" class="hidden"><h3 data-i18n="expectedPoints">預期重點（每行一點）</h3><div id="expectedPreview" class="review-box"></div></section>
+              <section id="previousMissingComparison" class="hidden"><h3 data-i18n="previousMissingPoints">上次漏掉的重點</h3><div id="previousMissingPreview" class="review-box"></div></section>
               <div class="score-panel">
                 <label for="scoreSlider" data-i18n="scoreQuestion">這次抓住了幾成重點？</label>
                 <input id="scoreSlider" type="range" min="0" max="5" value="3" />
@@ -169,6 +170,13 @@
                 <input id="confidenceSlider" type="range" min="0" max="5" value="3" />
                 <span id="confidenceLabel">3 / 5</span>
               </div>
+              <label id="reviewIntervalLabel" for="reviewInterval" data-i18n="reviewInterval">下次複習間隔（天）</label>
+              <select id="reviewInterval">
+                <option value="" data-i18n="automaticInterval">自動安排</option>
+                <option value="1">1</option><option value="3">3</option><option value="7">7</option><option value="14">14</option><option value="30">30</option>
+                <option value="custom" data-i18n="customInterval">自訂天數</option>
+              </select>
+              <input id="customReviewDays" type="number" min="1" max="365" step="1" value="7" required hidden aria-labelledby="reviewIntervalLabel" />
               <label for="missingText" data-i18n="missingLabel">補上漏掉的重點</label>
               <textarea id="missingText" class="missing-text" placeholder="寫下剛剛沒有想起來、但下次要抓住的重點。" data-i18n-placeholder="missingPlaceholder"></textarea>
 

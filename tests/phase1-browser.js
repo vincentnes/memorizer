@@ -50,20 +50,31 @@
       check(getComputedStyle(document.querySelector(".source-panel")).display==="none", "hide source and expected points");
       check(getComputedStyle(articleLibraryList.closest(".history-panel")).display==="none", "hide previous answers");
       check(document.querySelector("#expectedPreview").textContent==="", "no comparison before submission");
+      check(document.querySelector("#previousMissingPreview").textContent==="", "hide previous missed points before submission");
       check(hintButton.disabled && structureButton.disabled, "no source hints in three-point mode");
       document.querySelector("#recallPoint1").value="My first point " + i;
       document.querySelector("#recallPoint2").value="My second point";
       document.querySelector("#recallPoint3").value="My third point";
       finishRecallButton.click();
+      check(document.querySelector("#previousMissingPreview").textContent === (i ? "Missed detail " + (i-1) : ""), "carry last missed points after submission");
       check(document.querySelector("#expectedPreview").textContent.includes("First expected"), "compare after submission");
       check(document.querySelector("#recallPreview").textContent.includes("My first point " + i), "submitted recall");
       scoreSlider.value="5"; confidenceSlider.value="5";
       missingText.value="Missed detail " + i;
+      if (i===0) {
+        document.querySelector("#reviewInterval").value="custom";
+        document.querySelector("#reviewInterval").dispatchEvent(new Event("change"));
+        check(!document.querySelector("#customReviewDays").hidden, "custom interval input visible");
+        document.querySelector("#customReviewDays").value="9";
+      }
       saveSessionButton.click(); saveSessionButton.click();
       const trained=loadArticles().find(a=>a.id===trainingId);
       check(trained.attempts.length===i+1, "save once per round");
+      if (i===0) check(trained.reviewIntervalDays===9 && trained.attempts[0].reviewIntervalMode==="manual", "save custom interval");
+      if (i>0) check(trained.attempts[0].previousMissing==="Missed detail " + (i-1), "save missed-point snapshot");
       check(trained.status===(i<2 ? "learning" : "mastered"), "repeated performance mastery");
       newRoundButton.click();
+      check(document.querySelector("#reviewInterval").value==="", "reset to automatic scheduling");
     }
     let trained=loadArticles().find(a=>a.id===trainingId);
     check(loadMemoryHistory().length===14, "retain more than twelve sessions");
@@ -82,8 +93,10 @@
     loadArticleIntoTrainer(loadArticles().find(a=>a.id===trainingId));
     recallMode.value="free";
     startReadingButton.click(); hideNowButton.click();
+    hintButton.click(); structureButton.click();
     recallText.value="Legacy free recall still works";
     finishRecallButton.click(); scoreSlider.value="1"; saveSessionButton.click();
+    check(loadArticles().find(a=>a.id===trainingId).attempts[0].hintsUsed.join(",")==="keywords,structure", "record free recall hints");
     check(loadArticles().find(a=>a.id===trainingId).attempts[0].recall===recallText.value, "free recall preserved");
     newRoundButton.click();
     currentLanguage="en"; applyLanguage();
